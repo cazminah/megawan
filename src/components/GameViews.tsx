@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { INTEREST_LEVELS, type ArcadeGame, type InterestLevel, type PublicUser } from "../../shared/types";
-import { hours, players } from "../lib/format";
+import { players } from "../lib/format";
 import { AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
 import { Chip, Cover } from "./ui";
@@ -122,7 +122,7 @@ export function GameGrid({ games, users, myId, onLevel, onOpen }: ViewProps) {
                     <button className="text-left" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>{g.name}</button>
                   </h3>
                   <p className="mt-0.5 text-xs text-faint">
-                    {[g.releaseYear, hours(g.ttbNormally) && `~${hours(g.ttbNormally)}`].filter(Boolean).join(" · ")}
+                    {g.releaseYear}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -152,7 +152,6 @@ export function GameTable({ games, users, myId, onLevel, onOpen }: ViewProps) {
             <th className="px-3 py-3 font-medium">year</th>
             <th className="px-3 py-3 font-medium">platforms</th>
             <th className="px-3 py-3 font-medium">players</th>
-            <th className="px-3 py-3 font-medium" title="time to beat, normal playthrough (from IGDB)">length</th>
             <th className="px-3 py-3 font-medium">genres</th>
             <th className="px-3 py-3 font-medium">who's in</th>
             <th className="px-3 py-3"><span className="sr-only">your interest</span></th>
@@ -172,7 +171,6 @@ export function GameTable({ games, users, myId, onLevel, onOpen }: ViewProps) {
               <td className="px-3 py-2 text-dim">{g.releaseYear ?? "—"}</td>
               <td className="max-w-48 px-3 py-2 text-dim">{g.platforms.join(", ") || "—"}</td>
               <td className="whitespace-nowrap px-3 py-2 text-dim">{players(g) ?? "solo"}</td>
-              <td className="whitespace-nowrap px-3 py-2 text-dim">{hours(g.ttbNormally) ?? "—"}</td>
               <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
               <td className="px-3 py-2"><RateButton game={g} myId={myId} onLevel={onLevel} /></td>
@@ -189,12 +187,6 @@ export function GameDetail({ game, users, myId, onLevel }: { game: ArcadeGame } 
   const [busy, setBusy] = useState(false);
   const set = async (l: InterestLevel | null) => { setBusy(true); try { await onLevel(game.igdbId, l); } finally { setBusy(false); } };
   const levels: InterestLevel[] = [3, 2, 1];
-  const stats = [
-    ["players", players(game) ?? "solo"],
-    ["rushed", hours(game.ttbHastily)],
-    ["normal", hours(game.ttbNormally)],
-    ["100%", hours(game.ttbCompletely)],
-  ].filter(([, v]) => v) as [string, string][];
 
   return (
     <div className="space-y-5">
@@ -203,12 +195,11 @@ export function GameDetail({ game, users, myId, onLevel }: { game: ArcadeGame } 
         <div className="min-w-0 space-y-2">
           <p className="text-sm text-faint">{[game.releaseYear, game.genres.join(", ")].filter(Boolean).join(" · ")}</p>
           <div className="flex flex-wrap gap-1">{game.platforms.map((p) => <Chip key={p}>{p}</Chip>)}</div>
-          {stats.length > 0 && (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 text-sm">
-              {stats.map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-2"><dt className="text-faint">{k}</dt><dd className="font-medium">{v}</dd></div>
-              ))}
-            </dl>
+          <p className="pt-1 text-sm"><span className="text-faint">players</span> <span className="font-medium">{players(game) ?? "solo"}</span></p>
+          {game.igdbUrl && (
+            <a href={game.igdbUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-faint underline-offset-2 hover:text-ink hover:underline">
+              more on IGDB ↗
+            </a>
           )}
         </div>
       </div>
@@ -242,20 +233,6 @@ export function GameDetail({ game, users, myId, onLevel }: { game: ArcadeGame } 
         })}
       </div>
 
-      {(game.storeLinks.length > 0 || game.igdbUrl) && (
-        <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-          {game.storeLinks.map((s) => (
-            <a key={s.store} href={s.url} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-line bg-panel-2 px-3 py-1.5 text-sm hover:border-keen">
-              {s.store} ↗
-            </a>
-          ))}
-          {game.igdbUrl && (
-            <a href={game.igdbUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl px-3 py-1.5 text-sm text-faint hover:text-ink">
-              IGDB ↗
-            </a>
-          )}
-        </div>
-      )}
     </div>
   );
 }

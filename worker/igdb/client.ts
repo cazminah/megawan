@@ -4,7 +4,7 @@
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { kv } from "../db/schema";
-import { cleanQuery, toGame, toSearchHit, type RawGame, type RawTimeToBeat } from "./map";
+import { cleanQuery, toGame, toSearchHit, type RawGame } from "./map";
 
 const TOKEN_KEY = "igdb_token";
 const API = "https://api.igdb.com/v4";
@@ -71,17 +71,11 @@ const GAME_FIELDS = [
   "multiplayer_modes.onlinecoopmax", "multiplayer_modes.offlinecoopmax",
   "multiplayer_modes.onlinecoop", "multiplayer_modes.offlinecoop",
   "multiplayer_modes.splitscreen", "multiplayer_modes.lancoop",
-  "websites.url", "external_games.url",
 ].join(",");
 
 export async function fetchGame(db: Db, env: Creds, igdbId: number) {
   const id = Math.trunc(igdbId);
-  const [games, ttb] = await Promise.all([
-    query<RawGame[]>(db, env, "games", `fields ${GAME_FIELDS}; where id = ${id}; limit 1;`),
-    query<RawTimeToBeat[]>(db, env, "game_time_to_beats", `fields hastily,normally,completely; where game_id = ${id}; limit 1;`).catch(
-      () => [] as RawTimeToBeat[], // nice-to-have; don't fail the whole add over it
-    ),
-  ]);
+  const games = await query<RawGame[]>(db, env, "games", `fields ${GAME_FIELDS}; where id = ${id}; limit 1;`);
   const raw = games[0];
-  return raw ? toGame(raw, ttb[0]) : null;
+  return raw ? toGame(raw) : null;
 }

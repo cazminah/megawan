@@ -34,11 +34,6 @@ export interface Me extends PublicUser {
   email: string | null;
 }
 
-export interface StoreLink {
-  store: string;
-  url: string;
-}
-
 export interface Game {
   igdbId: number;
   name: string;
@@ -53,10 +48,6 @@ export interface Game {
   offlineMax: number | null;
   onlineCoop: boolean;
   offlineCoop: boolean;
-  ttbHastily: number | null; // seconds
-  ttbNormally: number | null;
-  ttbCompletely: number | null;
-  storeLinks: StoreLink[];
   igdbUrl: string | null;
 }
 

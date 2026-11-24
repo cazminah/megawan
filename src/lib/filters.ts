@@ -5,7 +5,6 @@ import { maxPlayers } from "./format";
 
 export type Sort = "hype" | "people" | "recent" | "az";
 export type Multi = "any" | "online" | "local" | "coop";
-export type MaxLength = "any" | "5" | "15" | "40";
 
 export interface Filters {
   text: string;
@@ -13,7 +12,6 @@ export interface Filters {
   genres: string[]; // match any
   multi: Multi;
   minPlayers: number; // 0 = any
-  maxLength: MaxLength;
   unratedByMe: boolean;
   sort: Sort;
 }
@@ -24,14 +22,12 @@ export const DEFAULT_FILTERS: Filters = {
   genres: [],
   multi: "any",
   minPlayers: 0,
-  maxLength: "any",
   unratedByMe: false,
   sort: "hype",
 };
 
 export function applyFilters(games: ArcadeGame[], f: Filters, myId: string | null) {
   const text = f.text.trim().toLowerCase();
-  const maxSecs = f.maxLength === "any" ? null : Number(f.maxLength) * 3600;
   const out = games.filter((g) => {
     if (text && !g.name.toLowerCase().includes(text)) return false;
     if (f.platforms.length && !g.platforms.some((p) => f.platforms.includes(p))) return false;
@@ -40,7 +36,6 @@ export function applyFilters(games: ArcadeGame[], f: Filters, myId: string | nul
     if (f.multi === "local" && !((g.offlineMax ?? 0) > 1 || g.offlineCoop)) return false;
     if (f.multi === "coop" && !(g.onlineCoop || g.offlineCoop)) return false;
     if (f.minPlayers && (maxPlayers(g) ?? 1) < f.minPlayers) return false;
-    if (maxSecs !== null && !(g.ttbNormally && g.ttbNormally <= maxSecs)) return false;
     if (f.unratedByMe && myId && g.interests.some((i) => i.userId === myId)) return false;
     return true;
   });
@@ -62,7 +57,6 @@ export function facet(games: ArcadeGame[], pick: (g: ArcadeGame) => string[]) {
 
 export function activeFilterCount(f: Filters) {
   return (
-    f.platforms.length + f.genres.length + (f.multi !== "any" ? 1 : 0) + (f.minPlayers ? 1 : 0) +
-    (f.maxLength !== "any" ? 1 : 0) + (f.unratedByMe ? 1 : 0)
+    f.platforms.length + f.genres.length + (f.multi !== "any" ? 1 : 0) + (f.minPlayers ? 1 : 0) + (f.unratedByMe ? 1 : 0)
   );
 }

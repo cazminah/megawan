@@ -6,15 +6,15 @@ let n = 0;
 const game = (over: Partial<ArcadeGame> & { votes?: [string, InterestLevel][] }): ArcadeGame => ({
   igdbId: ++n, name: `game ${n}`, slug: "", coverImageId: null, releaseYear: 2020, summary: null,
   platforms: [], genres: [], gameModes: [], onlineMax: null, offlineMax: null, onlineCoop: false, offlineCoop: false,
-  ttbHastily: null, ttbNormally: null, ttbCompletely: null, storeLinks: [], igdbUrl: null, addedAt: n,
+  igdbUrl: null, addedAt: n,
   interests: (over.votes ?? [["u1", 1]]).map(([userId, level]) => ({ userId, level, updatedAt: 0 })),
   ...over,
 });
 
 const a = game({ name: "Among Us", platforms: ["PC", "Switch"], onlineMax: 15, votes: [["u1", 3], ["u2", 3]] });
-const b = game({ name: "Baldur's Gate 3", platforms: ["PC"], onlineMax: 4, onlineCoop: true, ttbNormally: 75 * 3600, votes: [["u1", 1], ["u2", 1], ["u3", 1]] });
-const c = game({ name: "Celeste", platforms: ["Switch"], ttbNormally: 8 * 3600, votes: [["u2", 2]] });
-const d = game({ name: "Overcooked 2", platforms: ["Switch", "PS5"], offlineMax: 4, offlineCoop: true, ttbNormally: 4 * 3600, votes: [["u3", 3]] });
+const b = game({ name: "Baldur's Gate 3", platforms: ["PC"], onlineMax: 4, onlineCoop: true, votes: [["u1", 1], ["u2", 1], ["u3", 1]] });
+const c = game({ name: "Celeste", platforms: ["Switch"], votes: [["u2", 2]] });
+const d = game({ name: "Overcooked 2", platforms: ["Switch", "PS5"], offlineMax: 4, offlineCoop: true, votes: [["u3", 3]] });
 const all = [a, b, c, d];
 const names = (gs: ArcadeGame[]) => gs.map((g) => g.name);
 
@@ -36,9 +36,8 @@ describe("applyFilters", () => {
     expect(names(applyFilters(all, { ...DEFAULT_FILTERS, multi: "coop", sort: "az" }, "u1"))).toEqual(["Baldur's Gate 3", "Overcooked 2"]);
   });
 
-  it("filters by group size and length", () => {
+  it("filters by group size", () => {
     expect(names(applyFilters(all, { ...DEFAULT_FILTERS, minPlayers: 8 }, "u1"))).toEqual(["Among Us"]);
-    expect(names(applyFilters(all, { ...DEFAULT_FILTERS, maxLength: "15", sort: "az" }, "u1"))).toEqual(["Celeste", "Overcooked 2"]);
   });
 
   it("hides games i've already rated", () => {

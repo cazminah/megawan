@@ -117,12 +117,6 @@ export function Arcade({ me }: { me: Me }) {
               <option value={0}>any group size</option>
               {[2, 4, 6, 8, 16].map((n) => <option key={n} value={n}>{n}+ players</option>)}
             </select>
-            <select value={filters.maxLength} onChange={(e) => set("maxLength", e.target.value as Filters["maxLength"])} className={selectCls} aria-label="maximum length">
-              <option value="any">any length</option>
-              <option value="5">under 5h</option>
-              <option value="15">under 15h</option>
-              <option value="40">under 40h</option>
-            </select>
             <label className="flex items-center gap-2 px-1 text-sm text-dim">
               <input type="checkbox" checked={filters.unratedByMe} onChange={(e) => set("unratedByMe", e.target.checked)} className="accent-keen" />
               only ones i haven't rated

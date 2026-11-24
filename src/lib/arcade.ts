@@ -49,8 +49,7 @@ export function useArcade(me: Me | null) {
             {
               igdbId, name: hit.name, slug: String(igdbId), coverImageId: hit.coverImageId, releaseYear: hit.releaseYear,
               summary: null, platforms: hit.platforms, genres: [], gameModes: [], onlineMax: null, offlineMax: null,
-              onlineCoop: false, offlineCoop: false, ttbHastily: null, ttbNormally: null, ttbCompletely: null,
-              storeLinks: [], igdbUrl: null, addedAt: Date.now(),
+              onlineCoop: false, offlineCoop: false, igdbUrl: null, addedAt: Date.now(),
               interests: [{ userId: me.id, level, updatedAt: Date.now() }],
             },
           ];

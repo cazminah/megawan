@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import raw from "./__fixtures__/game.json";
-import { cleanQuery, storeLinks, toGame, toSearchHit, type RawGame } from "./map";
+import { cleanQuery, toGame, toSearchHit, type RawGame } from "./map";
 
 describe("toGame", () => {
-  const game = toGame(raw as RawGame, { hastily: 180000, normally: 216000, completely: 360000 });
+  const game = toGame(raw as RawGame);
 
   it("pulls the basics through", () => {
     expect(game).toMatchObject({ igdbId: 119133, name: "Elden Ring", slug: "elden-ring", coverImageId: "co4jni", releaseYear: 2022 });
@@ -22,24 +22,6 @@ describe("toGame", () => {
     expect(game.offlineMax).toBeNull();
     expect(game.onlineCoop).toBe(true);
     expect(game.offlineCoop).toBe(false);
-  });
-
-  it("keeps time to beat in seconds", () => {
-    expect([game.ttbHastily, game.ttbNormally, game.ttbCompletely]).toEqual([180000, 216000, 360000]);
-    expect(toGame(raw as RawGame).ttbNormally).toBeNull();
-  });
-
-  it("only keeps known stores, once each, https only", () => {
-    expect(game.storeLinks).toEqual([
-      { store: "Steam", url: "https://store.steampowered.com/app/1245620" },
-      { store: "GOG", url: "https://www.gog.com/game/whatever" },
-    ]);
-  });
-});
-
-describe("storeLinks", () => {
-  it("doesn't fall for lookalike domains", () => {
-    expect(storeLinks(["https://store.steampowered.com.evil.io/x", "https://notgog.com/x"])).toEqual([]);
   });
 });
 
