@@ -4,6 +4,7 @@ import { Avatar } from "../components/Avatar";
 import { Button, ErrorNote, Field } from "../components/ui";
 import { api } from "../lib/api";
 import { iconLabel, loadIconIndex, searchIcons } from "../lib/icons";
+import { navigate } from "../lib/router";
 
 const MAX_UPLOAD = 8 * 1024 * 1024; // before we shrink it — the server caps the shrunk one at 2 MB
 
@@ -160,7 +161,7 @@ function EmailForm({ me, onSaved }: { me: Me; onSaved: (m: Me) => void }) {
   return (
     <form onSubmit={submit} className="space-y-3 rounded-2xl border border-line bg-panel p-5">
       <h2 className="font-display text-lg font-bold">email</h2>
-      <Field label="email (optional)" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} hint="only for password resets. leave blank to remove it." />
+      <Field label="email (optional)" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} hint="only for passphrase resets. leave blank to remove it." />
       <ErrorNote>{error}</ErrorNote>
       <div className="flex items-center justify-end gap-3">
         {msg && <span className="text-sm text-keen">{msg}</span>}
@@ -182,9 +183,9 @@ function PasswordForm() {
   };
   return (
     <form onSubmit={submit} className="space-y-3 rounded-2xl border border-line bg-panel p-5">
-      <h2 className="font-display text-lg font-bold">change password</h2>
-      <Field label="current password" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
-      <Field label="new password" type="password" autoComplete="new-password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required />
+      <h2 className="font-display text-lg font-bold">change passphrase</h2>
+      <Field label="current passphrase" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+      <Field label="new passphrase" type="password" autoComplete="new-password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} hint="8+ characters · don't reuse one from anywhere important" required />
       <ErrorNote>{error}</ErrorNote>
       <div className="flex items-center justify-end gap-3">
         {msg && <span className="text-sm text-keen">{msg}</span>}
@@ -194,19 +195,36 @@ function PasswordForm() {
   );
 }
 
+function ArcadeButton() {
+  return (
+    <Button onClick={() => navigate("/")} className="px-6 py-3 text-base">
+      to the arcade →
+    </Button>
+  );
+}
+
 export function Profile({ me, onSaved }: { me: Me; onSaved: (m: Me) => void }) {
   const welcome = new URLSearchParams(window.location.search).has("welcome");
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <div>
-        <h1 className="font-display text-3xl font-bold">{welcome ? `welcome, ${me.username} 👋` : me.username}</h1>
-        <p className="mt-1 text-sm text-dim">
-          {welcome ? "we gave you a random avatar — make it yours, then head to the arcade." : "your account bits."}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold">{welcome ? `welcome, ${me.username} 👋` : me.username}</h1>
+          <p className="mt-1 text-sm text-dim">
+            {welcome ? "we gave you a random avatar — make it yours (or don't), then head in." : "your account bits."}
+          </p>
+        </div>
+        {welcome && <ArcadeButton />}
       </div>
       <AvatarEditor me={me} onSaved={onSaved} />
-      <EmailForm me={me} onSaved={onSaved} />
-      <PasswordForm />
+      {welcome ? (
+        <div className="flex justify-center pt-2 pb-4"><ArcadeButton /></div>
+      ) : (
+        <>
+          <EmailForm me={me} onSaved={onSaved} />
+          <PasswordForm />
+        </>
+      )}
     </div>
   );
 }

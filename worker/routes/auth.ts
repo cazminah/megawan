@@ -14,7 +14,7 @@ import {
 import { randomToken, sha256Hex } from "../auth/tokens";
 import { resetMail, sendMail } from "../email";
 
-export const password = z.string().min(8, "password needs 8+ characters").max(200);
+export const password = z.string().min(8, "passphrase needs 8+ characters").max(200);
 const username = z
   .string()
   .trim()
@@ -66,7 +66,7 @@ export const auth = router()
   .post("/login", async (c) => {
     const body = await c.req.json().catch(() => null);
     const parsed = z.object({ username: z.string().trim().toLowerCase().max(24), password: z.string().max(200) }).safeParse(body);
-    if (!parsed.success) return c.json({ error: "wrong username or password" }, 400);
+    if (!parsed.success) return c.json({ error: "wrong username or passphrase" }, 400);
     const over =
       (await limited(c.env.AUTH_LIMIT, `login-ip:${clientIp(c)}`)) ??
       (await limited(c.env.AUTH_LIMIT, `login-user:${parsed.data.username}`));
@@ -75,7 +75,7 @@ export const auth = router()
     const db = c.get("db");
     const user = await db.select().from(users).where(eq(users.username, parsed.data.username)).get();
     const ok = await verifyPassword(parsed.data.password, user?.passwordHash ?? (await dummyHash()));
-    if (!user || !ok) return c.json({ error: "wrong username or password" }, 401);
+    if (!user || !ok) return c.json({ error: "wrong username or passphrase" }, 401);
 
     const s = await createSession(db, user.id);
     setSessionCookie(c, s.token, s.expiresAt);

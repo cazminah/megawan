@@ -70,7 +70,7 @@ export const meRoutes = router()
     if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "invalid input" }, 400);
     const user = me(c);
     if (!(await verifyPassword(parsed.data.current, user.passwordHash))) {
-      return c.json({ error: "current password's wrong" }, 401);
+      return c.json({ error: "current passphrase's wrong" }, 401);
     }
     const db = c.get("db");
     await db.update(users).set({ passwordHash: await hashPassword(parsed.data.next) }).where(eq(users.id, user.id));

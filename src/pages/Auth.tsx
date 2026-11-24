@@ -44,10 +44,10 @@ export function Login({ onAuthed }: { onAuthed: (m: Me) => void }) {
     <Card title="log in" footer={<>new here? <A to="/register">make an account</A></>}>
       <form onSubmit={submit} className="space-y-4">
         <Field label="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus />
-        <Field label="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Field label="passphrase" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <ErrorNote>{error}</ErrorNote>
         <Button type="submit" disabled={busy} className="w-full">{busy ? "logging in…" : "log in"}</Button>
-        <p className="text-center text-sm"><A to="/forgot">forgot your password?</A></p>
+        <p className="text-center text-sm"><A to="/forgot">forgot your passphrase?</A></p>
       </form>
     </Card>
   );
@@ -74,14 +74,14 @@ export function Register({ onAuthed }: { onAuthed: (m: Me) => void }) {
           required
           autoFocus
         />
-        <Field label="password" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} hint="8+ characters" required />
+        <Field label="passphrase" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} hint="8+ characters · don't reuse one from anywhere important" required />
         <Field
           label="email (optional)"
           type="email"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          hint="only used to reset your password if you forget it"
+          hint="only used to reset your passphrase if you forget it"
         />
         <ErrorNote>{error}</ErrorNote>
         <Button type="submit" disabled={busy} className="w-full">{busy ? "creating…" : "let's go"}</Button>
@@ -95,7 +95,7 @@ export function Forgot() {
   const [sent, setSent] = useState<string | null>(null);
   const { error, busy, submit } = useSubmit(() => api.forgot(username), (r) => setSent(r.message));
   return (
-    <Card title="forgot your password?" footer={<A to="/login">← back to log in</A>}>
+    <Card title="forgot your passphrase?" footer={<A to="/login">← back to log in</A>}>
       {sent ? (
         <p className="text-sm text-dim">{sent}. check your inbox (and spam). no email on your account? shout in the discord.</p>
       ) : (
@@ -114,12 +114,12 @@ export function Reset({ onAuthed }: { onAuthed: (m: Me) => void }) {
   const [password, setPassword] = useState("");
   const { error, busy, submit } = useSubmit(() => api.reset(token, password), (m) => { onAuthed(m); navigate("/", true); });
   return (
-    <Card title="pick a new password">
+    <Card title="pick a new passphrase">
       {!token ? (
         <ErrorNote>this link's missing its token — open the one from your email again.</ErrorNote>
       ) : (
         <form onSubmit={submit} className="space-y-4">
-          <Field label="new password" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+          <Field label="new passphrase" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} hint="8+ characters · don't reuse one from anywhere important" required autoFocus />
           <ErrorNote>{error}</ErrorNote>
           <Button type="submit" disabled={busy} className="w-full">{busy ? "saving…" : "save + log in"}</Button>
         </form>

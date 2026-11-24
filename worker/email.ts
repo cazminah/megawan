@@ -21,8 +21,8 @@ const esc = (s: string) =>
 
 export function resetMail(username: string, link: string): Omit<Mail, "to"> {
   return {
-    subject: "reset your megaWAN password",
-    text: `hey ${username},\n\nsomeone (hopefully you) asked to reset your megaWAN password. this link works once, for an hour:\n\n${link}\n\nif that wasn't you, ignore this and nothing changes.`,
-    html: `<p>hey ${esc(username)},</p><p>someone (hopefully you) asked to reset your megaWAN password. this link works once, for an hour:</p><p><a href="${esc(link)}">reset my password</a></p><p>if that wasn't you, ignore this and nothing changes.</p>`,
+    subject: "reset your megaWAN passphrase",
+    text: `hey ${username},\n\nsomeone (hopefully you) asked to reset your megaWAN passphrase. this link works once, for an hour:\n\n${link}\n\nif that wasn't you, ignore this and nothing changes.`,
+    html: `<p>hey ${esc(username)},</p><p>someone (hopefully you) asked to reset your megaWAN passphrase. this link works once, for an hour:</p><p><a href="${esc(link)}">reset my passphrase</a></p><p>if that wasn't you, ignore this and nothing changes.</p>`,
   };
 }
