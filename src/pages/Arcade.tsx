@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArcadeGame, Duration, InterestLevel, Me, SearchHit } from "../../shared/types";
 import { AddGameDialog } from "../components/AddGameDialog";
 import { GameDetail, GameGrid, GameTable } from "../components/GameViews";
 import { Button, Chip, ErrorNote, Modal } from "../components/ui";
 import { useArcade } from "../lib/arcade";
+import { useFlip } from "../lib/flip";
 import { activeFilterCount, applyFilters, DEFAULT_FILTERS, facet, type Filters } from "../lib/filters";
 
 type View = "grid" | "list";
@@ -28,7 +29,35 @@ export function Arcade({ me }: { me: Me }) {
   useEffect(() => remember("mw:view", view), [view]);
 
   const games = data?.games ?? [];
-  const shown = useMemo(() => applyFilters(games, filters, me.id), [games, filters, me.id]);
+  const sorted = useMemo(() => applyFilters(games, filters, me.id), [games, filters, me.id]);
+
+  // while a picker is open, keep the cards where they are (votes would otherwise
+  // re-sort them out from under the popover). on close they glide into place.
+  const [frozen, setFrozen] = useState<number[] | null>(null);
+  const [touched, setTouched] = useState<number | null>(null);
+  const lastOrder = useRef<number[]>([]);
+  const shown = useMemo(() => {
+    if (!frozen) return sorted;
+    const rank = new Map(frozen.map((id, i) => [id, i]));
+    return [...sorted].sort((a, b) => (rank.get(a.igdbId) ?? 1e9) - (rank.get(b.igdbId) ?? 1e9));
+  }, [sorted, frozen]);
+  lastOrder.current = shown.map((g) => g.igdbId);
+  const onEditing = useCallback((igdbId: number, open: boolean) => {
+    if (open) setFrozen(lastOrder.current);
+    else { setFrozen(null); setTouched(igdbId); }
+  }, []);
+
+  const results = useRef<HTMLDivElement>(null);
+  useFlip(results);
+  // after a reshuffle, keep the card you just voted on in view
+  useEffect(() => {
+    if (touched === null) return;
+    const t = setTimeout(() => {
+      results.current?.querySelector(`[data-flip="${touched}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      setTouched(null);
+    }, 380);
+    return () => clearTimeout(t);
+  }, [touched]);
   const platforms = useMemo(() => facet(games, (g) => g.platforms), [games]);
   const genres = useMemo(() => facet(games, (g) => g.genres), [games]);
   const existing = useMemo(
@@ -131,6 +160,7 @@ export function Arcade({ me }: { me: Me }) {
 
       <ErrorNote>{error}</ErrorNote>
 
+      <div ref={results} className="relative">
       {!data && !error ? (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 8 }, (_, i) => <li key={i} className="skeleton aspect-[3/5] rounded-2xl" />)}
@@ -144,10 +174,12 @@ export function Arcade({ me }: { me: Me }) {
       ) : !shown.length ? (
         <p className="py-12 text-center text-sm text-faint">nothing matches those filters.</p>
       ) : view === "grid" ? (
-        <GameGrid games={shown} users={data!.users} myId={me.id} onSet={setInterest} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
+        <GameGrid games={shown} users={data!.users} myId={me.id} onSet={setInterest} onEditing={onEditing} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
       ) : (
-        <GameTable games={shown} users={data!.users} myId={me.id} onSet={setInterest} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
+        <GameTable games={shown} users={data!.users} myId={me.id} onSet={setInterest} onEditing={onEditing} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
       )}
+
+      </div>
 
       <AddGameDialog open={adding} onClose={() => setAdding(false)} onSave={onAdd} existing={existing} />
       <Modal open={!!open} onClose={() => setOpenId(null)} title={open?.name ?? ""} wide>

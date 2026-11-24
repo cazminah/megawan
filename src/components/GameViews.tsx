@@ -14,13 +14,15 @@ export interface ViewProps {
   myId: string;
   onSet: SetInterest;
   onOpen: (g: ArcadeGame) => void;
+  /** a picker opened/closed — the arcade freezes its order while one is open */
+  onEditing?: (igdbId: number, open: boolean) => void;
 }
 
 const peopleOf = (g: ArcadeGame, users: Record<string, PublicUser>) =>
   g.interests.flatMap((i) => (users[i.userId] ? [{ user: users[i.userId]!, level: i.level }] : []));
 
 /** the little "+" / your-level button that pops THE picker */
-function RateButton({ game, myId, onSet }: { game: ArcadeGame; myId: string; onSet: SetInterest }) {
+function RateButton({ game, myId, onSet, onEditing }: { game: ArcadeGame; myId: string; onSet: SetInterest; onEditing?: ViewProps["onEditing"] }) {
   const vote = game.interests.find((i) => i.userId === myId);
   const mine = vote?.level ?? null;
   const [open, setOpen] = useState(false);
@@ -34,6 +36,14 @@ function RateButton({ game, myId, onSet }: { game: ArcadeGame; myId: string; onS
   const btn = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLDivElement>(null);
   const duration = draft === undefined ? (vote?.duration ?? null) : draft;
+
+  // tell the arcade when we open/close (skipping the first render)
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (wasOpen.current === open) return;
+    wasOpen.current = open;
+    onEditing?.(game.igdbId, open);
+  }, [open, game.igdbId, onEditing]);
 
   // the popover lives in a portal on <body> (cards clip + transform their children),
   // so place it by hand: above the button if it fits, else below, kept on screen
@@ -144,7 +154,7 @@ function RateButton({ game, myId, onSet }: { game: ArcadeGame; myId: string; onS
   );
 }
 
-export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
+export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewProps) {
   return (
     <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
@@ -152,7 +162,7 @@ export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
         const pl = players(g);
         const plats = g.platforms.length > 3 ? [...g.platforms.slice(0, 3), `+${g.platforms.length - 3}`] : g.platforms;
         return (
-          <li key={g.igdbId}>
+          <li key={g.igdbId} data-flip={g.igdbId}>
             {/* the whole card is a square: wide image on top, details underneath */}
             <article
               onClick={() => onOpen(g)}
@@ -176,7 +186,7 @@ export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <AvatarStack people={peopleOf(g, users)} max={5} size={26} />
-                  <RateButton game={g} myId={myId} onSet={onSet} />
+                  <RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} />
                 </div>
               </div>
             </article>
@@ -187,7 +197,7 @@ export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
   );
 }
 
-export function GameTable({ games, users, myId, onSet, onOpen }: ViewProps) {
+export function GameTable({ games, users, myId, onSet, onOpen, onEditing }: ViewProps) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
       <table className="w-full min-w-[760px] text-left text-sm">
@@ -204,7 +214,7 @@ export function GameTable({ games, users, myId, onSet, onOpen }: ViewProps) {
         </thead>
         <tbody>
           {games.map((g) => (
-            <tr key={g.igdbId} onClick={() => onOpen(g)} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-panel-2/60">
+            <tr key={g.igdbId} data-flip={g.igdbId} onClick={() => onOpen(g)} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-panel-2/60">
               <td className="px-3 py-2">
                 <div className="flex items-center gap-3">
                   <Cover imageId={g.coverImageId} name="" className="h-12 w-9 shrink-0 rounded-md" />
@@ -218,7 +228,7 @@ export function GameTable({ games, users, myId, onSet, onOpen }: ViewProps) {
               <td className="whitespace-nowrap px-3 py-2 text-dim">{players(g) ?? "solo"}</td>
               <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
-              <td className="px-3 py-2"><RateButton game={g} myId={myId} onSet={onSet} /></td>
+              <td className="px-3 py-2"><RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} /></td>
             </tr>
           ))}
         </tbody>
