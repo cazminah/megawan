@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { INTEREST_LEVELS, LEVELS, type ArcadeGame, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, durationLabel, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
 import type { InterestPatch, SetInterest } from "../lib/arcade";
 import { players } from "../lib/format";
-import { AvatarStack } from "./Avatar";
+import { Avatar, AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
 import { TierIcon } from "./TierIcon";
 import { Chip, Cover } from "./ui";
@@ -231,20 +231,21 @@ export function GameTable({ games, users, myId, onSet, onOpen }: ViewProps) {
   );
 }
 
-export function GameDetail({ game, users, myId, onSet }: { game: ArcadeGame } & Omit<ViewProps, "games" | "onOpen">) {
-  const mine = game.interests.find((i) => i.userId === myId)?.level ?? null;
-  const [busy, setBusy] = useState(false);
-  const set = async (l: InterestLevel | null) => { setBusy(true); try { await onSet(game.igdbId, { level: l }); } finally { setBusy(false); } };
-  const levels = [...LEVELS].reverse();
+/** longest first; no duration goes last */
+function byDuration(a: ArcadeInterest, b: ArcadeInterest) {
+  if (!a.duration || !b.duration) return a.duration ? -1 : b.duration ? 1 : 0;
+  return b.duration.max - a.duration.max || b.duration.min - a.duration.min;
+}
 
+export function GameDetail({ game, users, myId }: { game: ArcadeGame; users: Record<string, PublicUser>; myId: string }) {
   return (
     <div className="space-y-5">
       <div className="flex gap-4">
-        <Cover imageId={game.coverImageId} name={game.name} className="aspect-[3/4] w-28 shrink-0 self-start rounded-xl sm:w-36" />
+        <Cover imageId={game.coverImageId} name={game.name} className="aspect-[3/4] w-24 shrink-0 self-start rounded-xl sm:w-32" />
         <div className="min-w-0 space-y-2">
           <p className="text-sm text-faint">{[game.releaseYear, game.genres.join(", ")].filter(Boolean).join(" · ")}</p>
           <div className="flex flex-wrap gap-1">{game.platforms.map((p) => <Chip key={p}>{p}</Chip>)}</div>
-          <p className="pt-1 text-sm"><span className="text-faint">players</span> <span className="font-medium">{players(game) ?? "solo"}</span></p>
+          <p className="text-sm"><span className="text-faint">players</span> <span className="font-medium">{players(game) ?? "solo"}</span></p>
           {game.igdbUrl && (
             <a href={game.igdbUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-faint underline-offset-2 hover:text-ink hover:underline">
               more on IGDB ↗
@@ -255,33 +256,40 @@ export function GameDetail({ game, users, myId, onSet }: { game: ArcadeGame } & 
 
       {game.summary && <p className="line-clamp-5 text-sm leading-relaxed text-dim">{game.summary}</p>}
 
-      <div className="rounded-2xl border border-line bg-bg/60 p-4">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-faint">you</p>
-        <InterestPicker value={mine} onChange={set} onClear={() => set(null)} busy={busy} />
-      </div>
-
-      <div className="space-y-3">
-        {levels.map((l) => {
-          const people = game.interests.filter((i) => i.level === l && users[i.userId]);
-          if (!people.length) return null;
-          return (
-            <div key={l}>
-              <p className="mb-1.5 text-sm font-semibold" style={{ color: INTEREST_LEVELS[l].color }}>
-                {INTEREST_LEVELS[l].label} · {people.length}
-              </p>
-              <ul className="flex flex-wrap gap-2">
-                {people.map((i) => (
-                  <li key={i.userId} className="flex items-center gap-1.5 rounded-full bg-panel-2 py-1 pl-1 pr-3 text-sm">
-                    <AvatarStack people={[{ user: users[i.userId]!, level: l }]} size={24} />
-                    {users[i.userId]!.username}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
-
+      <section aria-label="who's in" className="border-t border-line pt-4">
+        {/* least keen on the left → most keen on the right, same as the picker */}
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
+          {LEVELS.map((l) => {
+            const lv = INTEREST_LEVELS[l];
+            const people = game.interests.filter((i) => i.level === l && users[i.userId]).sort(byDuration);
+            return (
+              <div key={l} className="min-w-0">
+                <div className="mb-2 flex flex-col items-center gap-1 border-b-2 pb-2 text-center" style={{ borderColor: people.length ? lv.color : "var(--color-line)" }}>
+                  <TierIcon name={lv.icon} color={people.length ? lv.color : "var(--color-faint)"} size={22} />
+                  <span className="text-[11px] font-semibold leading-tight" style={{ color: people.length ? lv.text : "var(--color-faint)" }}>
+                    {lv.label}
+                  </span>
+                  <span className="text-[11px] text-faint">{people.length}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {people.map((i) => {
+                    const u = users[i.userId]!;
+                    return (
+                      <li key={i.userId} className="flex min-w-0 items-center gap-1.5" title={`${u.username}${i.duration ? ` · up for ${durationLabel(i.duration)}` : ""}`}>
+                        <Avatar avatar={u.avatar} level={l} size={22} />
+                        <span className="min-w-0">
+                          <span className={`block truncate text-xs ${i.userId === myId ? "font-bold text-ink" : "text-dim"}`}>{u.username}</span>
+                          {i.duration && <span className="block truncate text-[10px] text-faint">{durationLabel(i.duration)}</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

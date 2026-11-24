@@ -151,7 +151,7 @@ export function Arcade({ me }: { me: Me }) {
 
       <AddGameDialog open={adding} onClose={() => setAdding(false)} onSave={onAdd} existing={existing} />
       <Modal open={!!open} onClose={() => setOpenId(null)} title={open?.name ?? ""} wide>
-        {open && data && <GameDetail game={open} users={data.users} myId={me.id} onSet={setInterest} />}
+        {open && data && <GameDetail game={open} users={data.users} myId={me.id} />}
       </Modal>
     </div>
   );
