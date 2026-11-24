@@ -86,7 +86,7 @@ export function AddGameDialog({
               return (
                 <li key={h.igdbId}>
                   <button
-                    onClick={() => { setPicked(h); setLevel(mine ?? null); setDuration(undefined); }}
+                    onClick={() => { setPicked(h); setLevel(mine ?? 3); setDuration(undefined); }} // new games start on "keen"
                     className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-panel-2"
                   >
                     <Cover imageId={h.coverImageId} name="" className="h-14 w-10 shrink-0 rounded-md" />
