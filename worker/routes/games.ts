@@ -55,8 +55,8 @@ export const gameRoutes = router()
 
   .put("/:igdbId/interest", async (c) => {
     const igdbId = z.coerce.number().int().positive().safeParse(c.req.param("igdbId"));
-    const level = z.object({ level: z.union([z.literal(1), z.literal(2), z.literal(3)]) }).safeParse(await c.req.json().catch(() => null));
-    if (!igdbId.success || !level.success) return c.json({ error: "pick a level from 1 to 3" }, 400);
+    const level = z.object({ level: z.number().int().min(1).max(5) }).safeParse(await c.req.json().catch(() => null));
+    if (!igdbId.success || !level.success) return c.json({ error: "pick a level from 1 to 5" }, 400);
     const db = c.get("db");
     const now = Date.now();
 

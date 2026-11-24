@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { INTEREST_LEVELS, type ArcadeGame, type InterestLevel, type PublicUser } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, type ArcadeGame, type InterestLevel, type PublicUser } from "../../shared/types";
 import { players } from "../lib/format";
 import { AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
+import { TierIcon } from "./TierIcon";
 import { Chip, Cover } from "./ui";
 
 export interface ViewProps {
@@ -71,10 +72,10 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={mine ? `your interest: ${INTEREST_LEVELS[mine].label} — change` : "say how keen you are"}
-        className="grid h-9 min-w-9 place-items-center rounded-full border-2 px-2 text-sm font-bold transition hover:scale-105"
-        style={{ borderColor: color ?? "var(--color-line)", background: color ? `${color}33` : "var(--color-panel-2)", color: color ?? "var(--color-dim)" }}
+        className="grid h-9 w-9 place-items-center rounded-full border-2 text-lg font-bold transition hover:scale-110"
+        style={{ borderColor: color ?? "var(--color-line)", background: color ? `${color}26` : "var(--color-panel-2)", color: "var(--color-dim)" }}
       >
-        {mine ? INTEREST_LEVELS[mine].short : "+"}
+        {mine ? <TierIcon name={INTEREST_LEVELS[mine].icon} color={color!} size={20} /> : "+"}
       </button>
       {open &&
         createPortal(
@@ -83,10 +84,10 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
             role="dialog"
             aria-label={`how keen are you on ${game.name}?`}
             onClick={(e) => e.stopPropagation()}
-            className="fixed z-50 w-72 max-w-[calc(100vw-1rem)] rounded-2xl border border-line bg-panel p-4 shadow-2xl"
+            className="fixed z-50 w-80 max-w-[calc(100vw-1rem)] rounded-2xl border border-line bg-panel p-4 shadow-2xl"
             style={pos ?? { left: -9999, top: 0, visibility: "hidden" }}
           >
-            <p className="mb-1 truncate font-display text-sm font-semibold">{game.name}</p>
+            <p className="mb-3 truncate font-display text-sm font-semibold">{game.name}</p>
             <InterestPicker value={mine} onChange={set} onClear={() => set(null)} busy={busy} />
           </div>,
           document.body,
@@ -186,7 +187,7 @@ export function GameDetail({ game, users, myId, onLevel }: { game: ArcadeGame } 
   const mine = game.interests.find((i) => i.userId === myId)?.level ?? null;
   const [busy, setBusy] = useState(false);
   const set = async (l: InterestLevel | null) => { setBusy(true); try { await onLevel(game.igdbId, l); } finally { setBusy(false); } };
-  const levels: InterestLevel[] = [3, 2, 1];
+  const levels = [...LEVELS].reverse();
 
   return (
     <div className="space-y-5">

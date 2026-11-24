@@ -1,10 +1,11 @@
-import { INTEREST_LEVELS, type InterestLevel } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, type InterestLevel } from "../../shared/types";
+import { TierIcon } from "./TierIcon";
 
-const ORDER: InterestLevel[] = [1, 2, 3]; // left → right, meh → perish
+const TRACK = `linear-gradient(90deg, ${LEVELS.map((l) => INTEREST_LEVELS[l].color).join(", ")})`;
 
 /**
- * a three-notch slider. it's really a radio group (arrow keys work), drawn as a
- * gradient track so it reads as "how much".
+ * the one interest picker: five notches on a dim → bright track, an icon and a
+ * word or two each. it's a radio group underneath (arrow keys work).
  */
 export function InterestPicker({
   value,
@@ -17,29 +18,29 @@ export function InterestPicker({
   onClear?: () => void;
   busy?: boolean;
 }) {
-  const current = value ? INTEREST_LEVELS[value] : null;
+  const idx = value ? LEVELS.indexOf(value) : -1;
   return (
     <div className={busy ? "pointer-events-none opacity-60" : ""}>
       <div
         role="radiogroup"
         aria-label="how keen are you?"
-        className="relative flex items-center justify-between px-2 py-3"
+        className="relative grid grid-cols-5"
         onKeyDown={(e) => {
           if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
           e.preventDefault();
-          const i = value ? ORDER.indexOf(value) : -1;
-          const next = ORDER[Math.min(2, Math.max(0, i + (e.key === "ArrowRight" ? 1 : -1)))]!;
+          const next = LEVELS[Math.min(4, Math.max(0, (idx < 0 ? 1 : idx) + (e.key === "ArrowRight" ? 1 : -1)))]!;
           onChange(next);
+          (e.currentTarget.querySelectorAll("button")[LEVELS.indexOf(next)] as HTMLButtonElement | undefined)?.focus();
         }}
       >
-        <div className="hype-gradient absolute inset-x-4 top-1/2 h-1.5 -translate-y-1/2 rounded-full opacity-40" />
-        {value && (
-          <div
-            className="hype-gradient absolute left-4 top-1/2 h-1.5 -translate-y-1/2 rounded-full transition-all"
-            style={{ width: `calc((100% - 2rem) * ${ORDER.indexOf(value) / 2})` }}
-          />
+        {/* track: faint all the way, solid up to the chosen notch */}
+        <div className="absolute inset-x-[10%] top-[19px] h-1 rounded-full opacity-25" style={{ background: TRACK }} />
+        {idx > 0 && (
+          <div className="absolute left-[10%] top-[19px] h-1 overflow-hidden rounded-full" style={{ width: `${idx * 20}%` }}>
+            <div className="h-full" style={{ background: TRACK, width: `${(4 / idx) * 100}%` }} />
+          </div>
         )}
-        {ORDER.map((l) => {
+        {LEVELS.map((l) => {
           const lv = INTEREST_LEVELS[l];
           const on = value === l;
           return (
@@ -49,39 +50,38 @@ export function InterestPicker({
               role="radio"
               aria-checked={on}
               aria-label={lv.label}
-              tabIndex={on || (!value && l === 2) ? 0 : -1}
+              tabIndex={on || (!value && l === 3) ? 0 : -1}
               onClick={() => onChange(l)}
-              className="relative z-10 grid h-9 w-9 place-items-center rounded-full border-2 transition-transform hover:scale-110"
-              style={{
-                borderColor: lv.color,
-                background: on ? lv.color : "var(--color-panel)",
-                boxShadow: on ? `0 0 16px ${lv.color}` : "none",
-                transform: on ? "scale(1.15)" : undefined,
-              }}
+              className="group relative z-10 flex flex-col items-center gap-1.5 outline-none"
             >
-              <span className="sr-only">{lv.label}</span>
-              {on && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+              <span
+                className="grid h-10 w-10 place-items-center rounded-full border-2 transition group-hover:scale-110 group-focus-visible:ring-2 group-focus-visible:ring-white/60"
+                style={{
+                  borderColor: on ? lv.color : `${lv.color}88`,
+                  background: on ? lv.color : "var(--color-bg)",
+                  boxShadow: on ? `0 0 ${l === 5 ? 22 : 12}px ${lv.color}aa` : "none",
+                  transform: on ? "scale(1.12)" : undefined,
+                }}
+              >
+                <TierIcon name={lv.icon} color={on ? "#0b1020" : lv.color} size={22} />
+              </span>
+              <span
+                className="text-center text-[11px] font-semibold leading-tight"
+                style={{ color: on ? lv.text : "var(--color-faint)" }}
+              >
+                {lv.label}
+              </span>
             </button>
           );
         })}
       </div>
-      <div className="flex justify-between px-0.5 text-[11px] leading-tight text-faint">
-        {ORDER.map((l) => (
-          <span key={l} className="w-1/3 text-center first:text-left last:text-right" style={value === l ? { color: INTEREST_LEVELS[l].color } : undefined}>
-            {INTEREST_LEVELS[l].label}
-          </span>
-        ))}
-      </div>
-      <div className="mt-3 flex min-h-6 items-center justify-between text-sm">
-        <span className="font-display font-semibold" style={{ color: current?.color ?? "var(--color-dim)" }}>
-          {current ? current.label : "how keen are you?"}
-        </span>
-        {value && onClear && (
+      {value && onClear && (
+        <div className="mt-2 text-right">
           <button type="button" onClick={onClear} className="text-xs text-faint underline-offset-2 hover:text-ink hover:underline">
             nah, remove me
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,15 +11,15 @@ const game = (over: Partial<ArcadeGame> & { votes?: [string, InterestLevel][] })
   ...over,
 });
 
-const a = game({ name: "Among Us", platforms: ["PC", "Switch"], onlineMax: 15, votes: [["u1", 3], ["u2", 3]] });
+const a = game({ name: "Among Us", platforms: ["PC", "Switch"], onlineMax: 15, votes: [["u1", 5], ["u2", 5]] });
 const b = game({ name: "Baldur's Gate 3", platforms: ["PC"], onlineMax: 4, onlineCoop: true, votes: [["u1", 1], ["u2", 1], ["u3", 1]] });
 const c = game({ name: "Celeste", platforms: ["Switch"], votes: [["u2", 2]] });
-const d = game({ name: "Overcooked 2", platforms: ["Switch", "PS5"], offlineMax: 4, offlineCoop: true, votes: [["u3", 3]] });
+const d = game({ name: "Overcooked 2", platforms: ["Switch", "PS5"], offlineMax: 4, offlineCoop: true, votes: [["u3", 5]] });
 const all = [a, b, c, d];
 const names = (gs: ArcadeGame[]) => gs.map((g) => g.name);
 
 describe("applyFilters", () => {
-  it("sorts by hype — pink beats a pile of blue", () => {
+  it("sorts by hype — a LET'S GO beats a pile of eh, sure", () => {
     expect(names(applyFilters(all, DEFAULT_FILTERS, "u1"))).toEqual(["Among Us", "Overcooked 2", "Baldur's Gate 3", "Celeste"]);
   });
 

@@ -1,15 +1,26 @@
 // shapes shared by the worker and the react app
 
-export type InterestLevel = 1 | 2 | 3;
+export type InterestLevel = 1 | 2 | 3 | 4 | 5;
+export const LEVELS: InterestLevel[] = [1, 2, 3, 4, 5]; // least → most keen
 
+// an OKLCH ramp: lightness climbs 52% → 92% while the hue goes blue → purple →
+// pink → coral → yellow, so brightness alone tells you how keen. `text` is the
+// colour for words — tier 1's blue is too dim for text (3.1:1), so it uses the
+// normal dim text colour instead.
 export const INTEREST_LEVELS: Record<
   InterestLevel,
-  { label: string; short: string; color: string }
+  { label: string; color: string; text: string; icon: InterestIconName; weight: number }
 > = {
-  3: { label: "must play or i'll perish", short: "perish", color: "#ff4fa3" },
-  2: { label: "keen", short: "keen", color: "#a05cff" },
-  1: { label: "if nothing better's on", short: "maybe", color: "#4aa8ff" },
+  1: { label: "eh, sure", color: "#4c689d", text: "#9aa3d6", icon: "neutral", weight: 1 },
+  2: { label: "i'm down", color: "#816dd2", text: "#816dd2", icon: "thumb", weight: 2 },
+  3: { label: "keen", color: "#dc5dd4", text: "#dc5dd4", icon: "heart", weight: 3 },
+  4: { label: "hyped", color: "#ff7b74", text: "#ff7b74", icon: "fire", weight: 5 },
+  5: { label: "LET'S GO", color: "#ffde79", text: "#ffde79", icon: "rocket", weight: 8 },
 };
+
+export type InterestIconName = "neutral" | "thumb" | "heart" | "fire" | "rocket" | "skull";
+
+export const isLevel = (n: unknown): n is InterestLevel => LEVELS.includes(n as InterestLevel);
 
 // 18 icon colours, all bright enough to pop on the navy avatar background
 export const ICON_COLORS = [
@@ -80,9 +91,9 @@ export function coverUrl(imageId: string | null, size: "cover_big" | "cover_smal
 }
 
 export function hypeScore(interests: { level: InterestLevel }[]) {
-  // pink counts a lot more than blue — a "perish" vote is worth ~3 "maybes"
-  const weight = { 1: 1, 2: 2, 3: 4 } as const;
-  return interests.reduce((sum, i) => sum + weight[i.level], 0);
+  // weights grow faster than linear (1·2·3·5·8): two "hyped" beat three "i'm down",
+  // but one "LET'S GO" doesn't beat three "keen"
+  return interests.reduce((sum, i) => sum + INTEREST_LEVELS[i.level].weight, 0);
 }
 
 export const USERNAME_RE = /^[a-z0-9_-]{3,24}$/;
