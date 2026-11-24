@@ -5,25 +5,105 @@
   "summary": "a big scary open world",
   "url": "https://www.igdb.com/games/elden-ring",
   "first_release_date": 1645747200,
-  "cover": { "image_id": "co4jni" },
+  "cover": {
+    "image_id": "co4jni"
+  },
   "platforms": [
-    { "name": "PC (Microsoft Windows)", "abbreviation": "PC" },
-    { "name": "PlayStation 5", "abbreviation": "PS5" },
-    { "name": "Xbox Series X|S", "abbreviation": "Series X|S" },
-    { "name": "Some Platform With No Abbrev" }
+    {
+      "name": "PC (Microsoft Windows)",
+      "abbreviation": "PC"
+    },
+    {
+      "name": "PlayStation 5",
+      "abbreviation": "PS5"
+    },
+    {
+      "name": "Xbox Series X|S",
+      "abbreviation": "Series X|S"
+    },
+    {
+      "name": "Some Platform With No Abbrev"
+    }
   ],
-  "genres": [{ "name": "Role-playing (RPG)" }, { "name": "Adventure" }, { "name": "Adventure" }],
-  "game_modes": [{ "name": "Single player" }, { "name": "Multiplayer" }, { "name": "Co-operative" }],
+  "genres": [
+    {
+      "name": "Role-playing (RPG)"
+    },
+    {
+      "name": "Adventure"
+    },
+    {
+      "name": "Adventure"
+    }
+  ],
+  "game_modes": [
+    {
+      "name": "Single player"
+    },
+    {
+      "name": "Multiplayer"
+    },
+    {
+      "name": "Co-operative"
+    }
+  ],
   "multiplayer_modes": [
-    { "onlinemax": 4, "onlinecoopmax": 3, "onlinecoop": true, "offlinecoop": false },
-    { "onlinemax": 6, "offlinemax": 0 }
+    {
+      "onlinemax": 4,
+      "onlinecoopmax": 3,
+      "onlinecoop": true,
+      "offlinecoop": false
+    },
+    {
+      "onlinemax": 6,
+      "offlinemax": 0
+    }
   ],
   "websites": [
-    { "url": "https://store.steampowered.com/app/1245620" },
-    { "url": "https://steamcommunity.com/app/1245620" },
-    { "url": "https://en.bandainamcoent.eu/elden-ring" },
-    { "url": "javascript:alert(1)" },
-    { "url": "http://www.gog.com/game/whatever" }
+    {
+      "url": "https://store.steampowered.com/app/1245620"
+    },
+    {
+      "url": "https://steamcommunity.com/app/1245620"
+    },
+    {
+      "url": "https://en.bandainamcoent.eu/elden-ring"
+    },
+    {
+      "url": "javascript:alert(1)"
+    },
+    {
+      "url": "http://www.gog.com/game/whatever"
+    }
   ],
-  "external_games": [{ "url": "https://store.steampowered.com/app/1245620/dupe" }, { "url": "not a url" }]
+  "external_games": [
+    {
+      "url": "https://store.steampowered.com/app/1245620/dupe"
+    },
+    {
+      "url": "not a url"
+    }
+  ],
+  "themes": [
+    {
+      "name": "Action"
+    },
+    {
+      "name": "Fantasy"
+    }
+  ],
+  "videos": [
+    {
+      "video_id": "E3Huy2cdih0",
+      "name": "Gameplay Reveal"
+    },
+    {
+      "video_id": "AKXiKBnzpBQ",
+      "name": "Launch Trailer"
+    }
+  ],
+  "keywords": [
+    12,
+    2385
+  ]
 }

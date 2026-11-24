@@ -70,12 +70,15 @@ export interface Game {
   summary: string | null;
   platforms: string[];
   genres: string[];
-  gameModes: string[];
+  themes: string[]; // IGDB themes: Party, Comedy, Horror, Survival…
+  gameModes: string[]; // Single player, Multiplayer, Co-operative, Split screen, MMO, Battle Royale
   onlineMax: number | null;
   offlineMax: number | null;
   onlineCoop: boolean;
   offlineCoop: boolean;
   igdbUrl: string | null;
+  trailerYoutubeId: string | null;
+  freeToPlay: boolean;
 }
 
 export interface SearchHit {

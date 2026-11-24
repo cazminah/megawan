@@ -13,6 +13,13 @@ describe("toGame", () => {
     expect(game.platforms).toEqual(["PC", "PS5", "Series X|S", "Some Platform With No Abbrev"]);
   });
 
+  it("pulls themes, a trailer (named trailer first) and free-to-play", () => {
+    expect(game.themes).toEqual(["Action", "Fantasy"]);
+    expect(game.trailerYoutubeId).toBe("AKXiKBnzpBQ");
+    expect(game.freeToPlay).toBe(true);
+    expect(toGame({ id: 1, name: "x", videos: [{ video_id: "bad id with spaces" }] }).trailerYoutubeId).toBeNull();
+  });
+
   it("dedupes genres", () => {
     expect(game.genres).toEqual(["Role-playing (RPG)", "Adventure"]);
   });

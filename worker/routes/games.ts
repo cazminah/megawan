@@ -18,10 +18,12 @@ export const interestBody = z.object({
 
 const STALE_AFTER = 30 * 24 * 60 * 60 * 1000; // re-pull IGDB data a month after we cached it
 // bump when the shape of a cached Game changes; older rows get re-fetched quietly
-const GAME_DATA_VERSION = 2; // 2: heroImageId, no store links / time-to-beat
+const GAME_DATA_VERSION = 3; // 2: heroImageId, no store links / time-to-beat · 3: themes, trailer, free-to-play
 const REFRESH_PER_LOAD = 4; // IGDB allows 4 req/s — keep the background top-up gentle
 
 type StoredGame = Game & { _v?: number };
+// fields added after v1 — filled in for rows that haven't been refreshed yet
+const GAME_DEFAULTS = { heroImageId: null, themes: [], trailerYoutubeId: null, freeToPlay: false } satisfies Partial<Game>;
 const pack = (g: Game) => JSON.stringify({ ...g, _v: GAME_DATA_VERSION } satisfies StoredGame);
 const unpack = (data: string) => {
   const { _v, ...game } = JSON.parse(data) as StoredGame;
@@ -81,7 +83,7 @@ export const gameRoutes = router()
     for (const g of gameRows) {
       const { game, outdated: old } = unpack(g.data);
       if (old) outdated.push(g.igdbId);
-      byGame.set(g.igdbId, { ...game, heroImageId: game.heroImageId ?? null, addedAt: g.addedAt, interests: [] });
+      byGame.set(g.igdbId, { ...GAME_DEFAULTS, ...game, addedAt: g.addedAt, interests: [] });
     }
     if (outdated.length) c.executionCtx.waitUntil(refreshOutdated(db, c.env, outdated.slice(0, REFRESH_PER_LOAD)));
     for (const i of interestRows) {

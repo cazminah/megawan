@@ -28,6 +28,9 @@ export interface RawGame {
   screenshots?: RawImage[];
   platforms?: RawPlatform[];
   genres?: { name?: string }[];
+  themes?: { name?: string }[];
+  videos?: { video_id?: string; name?: string }[];
+  keywords?: number[];
   game_modes?: { name?: string }[];
   multiplayer_modes?: RawMultiplayer[];
 }
@@ -53,6 +56,15 @@ export function maxOf(modes: RawMultiplayer[] | undefined, ...keys: (keyof RawMu
   return best;
 }
 
+// IGDB keyword id for "free-to-play" (looked up via /v4/keywords)
+export const FREE_TO_PLAY_KEYWORD = 2385;
+
+/** a YouTube id for the game's trailer: one named "trailer" if there is one, else the first video */
+export function trailer(raw: RawGame) {
+  const vids = (raw.videos ?? []).filter((v) => v.video_id && /^[\w-]{6,20}$/.test(v.video_id));
+  return (vids.find((v) => /trailer/i.test(v.name ?? "")) ?? vids[0])?.video_id ?? null;
+}
+
 /** best wide image for a card: a landscape artwork, else the first screenshot, else none */
 export function heroImage(raw: RawGame) {
   const wide = (raw.artworks ?? []).find((a) => a.image_id && (a.width ?? 16) >= (a.height ?? 9) * 1.2);
@@ -71,12 +83,15 @@ export function toGame(raw: RawGame): Game {
     summary: raw.summary ?? null,
     platforms: [...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))],
     genres: names(raw.genres),
+    themes: names(raw.themes),
     gameModes: names(raw.game_modes),
     onlineMax: maxOf(modes, "onlinemax", "onlinecoopmax"),
     offlineMax: maxOf(modes, "offlinemax", "offlinecoopmax"),
     onlineCoop: !!modes?.some((m) => m.onlinecoop),
     offlineCoop: !!modes?.some((m) => m.offlinecoop || m.splitscreen || m.lancoop),
     igdbUrl: raw.url ?? null,
+    trailerYoutubeId: trailer(raw),
+    freeToPlay: (raw.keywords ?? []).includes(FREE_TO_PLAY_KEYWORD),
   };
 }
 
