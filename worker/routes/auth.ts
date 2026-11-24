@@ -51,6 +51,7 @@ export const auth = router()
       email: mail ?? null,
       passwordHash: await hashPassword(pw),
       avatar: JSON.stringify(randomAvatar()),
+      isAdmin: false,
       createdAt: Date.now(),
     };
     try {

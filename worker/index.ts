@@ -8,12 +8,14 @@ import { AVATAR_KEY_RE } from "./avatars";
 import { auth } from "./routes/auth";
 import { meRoutes } from "./routes/me";
 import { gameRoutes } from "./routes/games";
+import { adminRoutes } from "./routes/admin";
 import { Hono } from "hono";
 
 const api = router()
   .route("/auth", auth)
   .route("/me", meRoutes)
   .route("/games", gameRoutes)
+  .route("/admin", adminRoutes)
   .notFound((c) => c.json({ error: "not found" }, 404));
 
 const app = new Hono<AppEnv>()

@@ -1,4 +1,4 @@
-import type { ArcadeResponse, Duration, InterestLevel, Me, SearchHit } from "../../shared/types";
+import type { AdminGame, AdminUser, ArcadeResponse, Duration, InterestLevel, Me, SearchHit } from "../../shared/types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
@@ -33,4 +33,9 @@ export const api = {
   setInterest: (igdbId: number, level: InterestLevel, duration?: Duration | null) =>
     call<{ ok: true }>("PUT", `/games/${igdbId}/interest`, { level, duration }),
   clearInterest: (igdbId: number) => call<{ ok: true }>("DELETE", `/games/${igdbId}/interest`),
+  adminUsers: () => call<AdminUser[]>("GET", "/admin/users"),
+  adminGames: () => call<AdminGame[]>("GET", "/admin/games"),
+  adminResetAvatar: (userId: string) => call<{ ok: true }>("POST", `/admin/users/${encodeURIComponent(userId)}/reset-avatar`),
+  adminDeleteUser: (userId: string) => call<{ ok: true }>("DELETE", `/admin/users/${encodeURIComponent(userId)}`),
+  adminDeleteGame: (igdbId: number) => call<{ ok: true }>("DELETE", `/admin/games/${igdbId}`),
 };

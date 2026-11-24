@@ -58,6 +58,22 @@ export interface PublicUser {
 
 export interface Me extends PublicUser {
   email: string | null;
+  isAdmin: boolean;
+}
+
+export interface AdminUser extends PublicUser {
+  email: string | null;
+  isAdmin: boolean;
+  createdAt: number;
+  votes: number;
+}
+
+export interface AdminGame {
+  igdbId: number;
+  name: string;
+  coverImageId: string | null;
+  addedAt: number;
+  votes: number;
 }
 
 export interface Game {

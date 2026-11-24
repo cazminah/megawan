@@ -18,6 +18,11 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
+export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (!c.get("user")?.isAdmin) return c.json({ error: "admins only" }, 403);
+  await next();
+};
+
 /** the user, for handlers behind requireUser */
 export const me = (c: Ctx) => c.get("user")!;
 
@@ -29,7 +34,7 @@ export const toPublic = (u: UserRow): PublicUser => ({
   avatar: parseAvatar(u.avatar),
 });
 
-export const toMe = (u: UserRow): Me => ({ ...toPublic(u), email: u.email });
+export const toMe = (u: UserRow): Me => ({ ...toPublic(u), email: u.email, isAdmin: !!u.isAdmin });
 
 /** rate-limit by key; returns a 429 response if over, else null */
 export async function limited(limiter: RateLimit, key: string) {

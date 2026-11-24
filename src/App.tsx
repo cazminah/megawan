@@ -7,6 +7,7 @@ import { Arcade } from "./pages/Arcade";
 import { Forgot, Login, Register, Reset } from "./pages/Auth";
 import { Credits } from "./pages/Credits";
 import { Profile } from "./pages/Profile";
+import { Admin } from "./pages/Admin";
 
 const PUBLIC = ["/login", "/register", "/forgot", "/reset", "/credits"];
 
@@ -29,6 +30,7 @@ function UserMenu({ me, onLogout }: { me: Me; onLogout: () => void }) {
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-44 rounded-xl border border-line bg-panel p-1 shadow-2xl" onClick={() => setOpen(false)}>
           <a href="/profile" onClick={linkTo("/profile")} className={item}>profile + avatar</a>
+          {me.isAdmin && <a href="/admin" onClick={linkTo("/admin")} className={item}>admin</a>}
           <button onClick={onLogout} className={item}>log out</button>
         </div>
       )}
@@ -68,6 +70,7 @@ export function App() {
       route === "/reset" ? <Reset onAuthed={setMe} /> :
       <Login onAuthed={setMe} />;
   } else if (route === "/profile") page = <Profile me={me} onSaved={setMe} />;
+  else if (route === "/admin" && me.isAdmin) page = <Admin me={me} />;
   else if (route === "/reset") page = <Reset onAuthed={setMe} />;
   else page = <Arcade me={me} />;
 
