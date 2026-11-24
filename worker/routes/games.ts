@@ -3,7 +3,7 @@ import { z } from "zod";
 import { DURATIONS, type ArcadeGame, type ArcadeResponse, type Game, type InterestLevel, type PublicUser } from "../../shared/types";
 import { limited, me, requireUser, router, toPublic } from "../app";
 import { games, interests, users } from "../db/schema";
-import { fetchGame, IgdbNotConfigured, searchGames } from "../igdb/client";
+import { fetchGame, IgdbNotConfigured, SEARCH_VERSION, searchGames } from "../igdb/client";
 import type { Db } from "../db/client";
 
 const durationIndex = z.number().int().min(0).max(DURATIONS.length - 1);
@@ -51,7 +51,7 @@ export const gameRoutes = router()
     if (over) return over;
 
     // search results are the same for everyone, so share them through the edge cache
-    const cacheKey = new Request(new URL(`/__cache/search?q=${encodeURIComponent(q.toLowerCase())}`, c.req.url));
+    const cacheKey = new Request(new URL(`/__cache/search/v${SEARCH_VERSION}?q=${encodeURIComponent(q.toLowerCase())}`, c.req.url));
     const cache = (caches as unknown as { default: Cache }).default;
     const hit = await cache.match(cacheKey);
     if (hit) return new Response(hit.body, hit);
