@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { INTEREST_LEVELS, LEVELS, durationLabel, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
 import type { InterestPatch, SetInterest } from "../lib/arcade";
-import { players } from "../lib/format";
+import { playersLong, playersShort, primaryGenre, shortGenre } from "../lib/format";
 import { Avatar, AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
 import { TierIcon } from "./TierIcon";
@@ -159,7 +159,6 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewP
     <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
         const top = g.interests.reduce<InterestLevel>((m, i) => (i.level > m ? i.level : m), 1);
-        const pl = players(g);
         const plats = g.platforms.length > 3 ? [...g.platforms.slice(0, 3), `+${g.platforms.length - 3}`] : g.platforms;
         return (
           <li key={g.igdbId} data-flip={g.igdbId}>
@@ -171,18 +170,13 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewP
             >
               <div className="relative min-h-0 flex-1 overflow-hidden">
                 <HeroImage game={g} className="h-full w-full transition group-hover:scale-[1.03]" />
-                {pl && (
-                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
-                    <TierIcon name="group" color="currentColor" size={14} /> {pl}
-                  </span>
-                )}
               </div>
               <div className="flex shrink-0 flex-col gap-2 p-3">
                 <div className="min-w-0">
                   <h3 className="truncate font-display font-bold leading-tight">
                     <button className="max-w-full truncate text-left" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>{g.name}</button>
                   </h3>
-                  <p className="mt-0.5 truncate text-xs text-faint">{[g.releaseYear, plats.join(" · ")].filter(Boolean).join(" — ")}</p>
+                  <MetaRow game={g} platforms={plats} />
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <AvatarStack people={peopleOf(g, users)} max={5} size={26} />
@@ -225,14 +219,61 @@ export function GameTable({ games, users, myId, onSet, onOpen, onEditing }: View
               </td>
               <td className="px-3 py-2 text-dim">{g.releaseYear ?? "—"}</td>
               <td className="max-w-48 px-3 py-2 text-dim">{g.platforms.join(", ") || "—"}</td>
-              <td className="whitespace-nowrap px-3 py-2 text-dim">{players(g) ?? "solo"}</td>
-              <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).join(", ") || "—"}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-dim"><Players game={g} /></td>
+              <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).map(shortGenre).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
               <td className="px-3 py-2"><RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} /></td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** players as metadata: a people icon + "1–4" (or "co-op" etc. when IGDB has no counts) */
+function Players({ game }: { game: ArcadeGame }) {
+  const p = playersShort(game);
+  if (!p) return <>—</>;
+  return (
+    <span className="inline-flex items-center gap-1" title={playersLong(game) ?? undefined}>
+      <TierIcon name={p.solo ? "person" : "group"} color="currentColor" size={14} />
+      {p.text}
+    </span>
+  );
+}
+
+/** year · platforms… (truncates) · players · genre (always visible, right-aligned) */
+function MetaRow({ game, platforms }: { game: ArcadeGame; platforms: string[] }) {
+  const genre = primaryGenre(game);
+  return (
+    <p className="mt-0.5 flex items-center gap-2 text-xs text-faint">
+      <span className="min-w-0 flex-1 truncate">{[game.releaseYear, ...platforms].filter(Boolean).join(" · ")}</span>
+      {playersShort(game) && <span className="shrink-0"><Players game={game} /></span>}
+      {genre && <span className="shrink-0 text-dim">{genre}</span>}
+    </p>
+  );
+}
+
+/** click-to-load: nothing from youtube loads (or plays) until you ask for it */
+function Trailer({ id, name }: { id: string; name: string }) {
+  const [playing, setPlaying] = useState(false);
+  return (
+    <div className="relative aspect-video overflow-hidden rounded-xl bg-bg">
+      {playing ? (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0`}
+          title={`${name} trailer`}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+        />
+      ) : (
+        <button type="button" onClick={() => setPlaying(true)} className="group absolute inset-0 grid place-items-center" aria-label={`play the ${name} trailer`}>
+          <img src={`https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-70 transition group-hover:opacity-90" />
+          <span className="relative rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur">▶ trailer</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -251,7 +292,15 @@ export function GameDetail({ game, users, myId }: { game: ArcadeGame; users: Rec
         <div className="min-w-0 space-y-2">
           <p className="text-sm text-faint">{[game.releaseYear, game.genres.join(", ")].filter(Boolean).join(" · ")}</p>
           <div className="flex flex-wrap gap-1">{game.platforms.map((p) => <Chip key={p}>{p}</Chip>)}</div>
-          <p className="text-sm"><span className="text-faint">players</span> <span className="font-medium">{players(game) ?? "solo"}</span></p>
+          {playersLong(game) && (
+            <p className="flex items-center gap-1.5 text-sm text-dim">
+              <TierIcon name={playersShort(game)?.solo ? "person" : "group"} color="currentColor" size={16} />
+              {playersLong(game)}
+            </p>
+          )}
+          {(game.themes.length > 0 || game.freeToPlay) && (
+            <p className="text-xs text-faint">{[...(game.freeToPlay ? ["free-to-play"] : []), ...game.themes].join(" · ")}</p>
+          )}
           {game.igdbUrl && (
             <a href={game.igdbUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-faint underline-offset-2 hover:text-ink hover:underline">
               more on IGDB ↗
@@ -261,6 +310,8 @@ export function GameDetail({ game, users, myId }: { game: ArcadeGame; users: Rec
       </div>
 
       {game.summary && <p className="line-clamp-5 text-sm leading-relaxed text-dim">{game.summary}</p>}
+
+      {game.trailerYoutubeId && <Trailer id={game.trailerYoutubeId} name={game.name} />}
 
       <section aria-label="who's in" className="border-t border-line pt-4">
         {/* least keen on the left → most keen on the right, same as the picker */}
