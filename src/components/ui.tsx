@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { TierIcon } from "./TierIcon";
 
 export function Button({
   variant = "primary",
@@ -101,6 +102,23 @@ export function Cover({ imageId, name, className = "" }: { imageId: string | nul
       className={`bg-panel-2 object-cover ${className}`}
     />
   ) : (
-    <div aria-label={name || undefined} className={`grid place-items-center bg-gradient-to-br from-panel-2 to-bg text-3xl opacity-80 ${className}`}>🎮</div>
+    <div aria-label={name || undefined} className={`grid place-items-center bg-gradient-to-br from-panel-2 to-bg ${className}`}><TierIcon name="gamepad" color="var(--color-line)" size={36} /></div>
+  );
+}
+
+/**
+ * a wide image for game cards: the game's artwork/screenshot if it has one,
+ * otherwise its cover (cropped to fit). sizes are big enough for retina cards.
+ */
+export function HeroImage({ game, className = "" }: { game: { heroImageId: string | null; coverImageId: string | null; name: string }; className?: string }) {
+  const url = game.heroImageId
+    ? `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${game.heroImageId}.jpg`
+    : game.coverImageId
+      ? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${game.coverImageId}.jpg`
+      : null;
+  return url ? (
+    <img src={url} alt="" loading="lazy" className={`bg-panel-2 object-cover ${className}`} />
+  ) : (
+    <div aria-label={game.name} className={`grid place-items-center bg-gradient-to-br from-panel-2 to-bg ${className}`}><TierIcon name="gamepad" color="var(--color-line)" size={44} /></div>
   );
 }

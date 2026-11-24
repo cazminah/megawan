@@ -14,6 +14,8 @@ export interface RawMultiplayer {
   splitscreen?: boolean;
   lancoop?: boolean;
 }
+export interface RawImage { image_id?: string; width?: number; height?: number }
+
 export interface RawGame {
   id: number;
   name: string;
@@ -22,6 +24,8 @@ export interface RawGame {
   url?: string;
   first_release_date?: number; // unix seconds
   cover?: { image_id?: string };
+  artworks?: RawImage[];
+  screenshots?: RawImage[];
   platforms?: RawPlatform[];
   genres?: { name?: string }[];
   game_modes?: { name?: string }[];
@@ -49,6 +53,12 @@ export function maxOf(modes: RawMultiplayer[] | undefined, ...keys: (keyof RawMu
   return best;
 }
 
+/** best wide image for a card: a landscape artwork, else the first screenshot, else none */
+export function heroImage(raw: RawGame) {
+  const wide = (raw.artworks ?? []).find((a) => a.image_id && (a.width ?? 16) >= (a.height ?? 9) * 1.2);
+  return wide?.image_id ?? raw.screenshots?.find((s) => s.image_id)?.image_id ?? null;
+}
+
 export function toGame(raw: RawGame): Game {
   const modes = raw.multiplayer_modes;
   return {
@@ -56,6 +66,7 @@ export function toGame(raw: RawGame): Game {
     name: raw.name,
     slug: raw.slug ?? String(raw.id),
     coverImageId: raw.cover?.image_id ?? null,
+    heroImageId: heroImage(raw),
     releaseYear: year(raw.first_release_date),
     summary: raw.summary ?? null,
     platforms: [...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))],

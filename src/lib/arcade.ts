@@ -56,7 +56,7 @@ export function useArcade(me: Me | null) {
         if (isNew && level && hit) {
           // brand-new game: show a placeholder card until the real data lands
           const placeholder: ArcadeGame = {
-            igdbId, name: hit.name, slug: String(igdbId), coverImageId: hit.coverImageId,
+            igdbId, name: hit.name, slug: String(igdbId), coverImageId: hit.coverImageId, heroImageId: null,
             releaseYear: hit.releaseYear, summary: null, platforms: hit.platforms, genres: [], gameModes: [],
             onlineMax: null, offlineMax: null, onlineCoop: false, offlineCoop: false, igdbUrl: null, addedAt: Date.now(),
             interests: [{ userId: me.id, level, duration: duration ?? null, updatedAt: Date.now() }],

@@ -4,7 +4,7 @@ import { applyFilters, DEFAULT_FILTERS, facet } from "./filters";
 
 let n = 0;
 const game = (over: Partial<ArcadeGame> & { votes?: [string, InterestLevel][] }): ArcadeGame => ({
-  igdbId: ++n, name: `game ${n}`, slug: "", coverImageId: null, releaseYear: 2020, summary: null,
+  igdbId: ++n, name: `game ${n}`, slug: "", coverImageId: null, heroImageId: null, releaseYear: 2020, summary: null,
   platforms: [], genres: [], gameModes: [], onlineMax: null, offlineMax: null, onlineCoop: false, offlineCoop: false,
   igdbUrl: null, addedAt: n,
   interests: (over.votes ?? [["u1", 1]]).map(([userId, level]) => ({ userId, level, duration: null, updatedAt: 0 })),

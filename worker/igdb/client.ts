@@ -66,6 +66,7 @@ export async function searchGames(db: Db, env: Creds, q: string) {
 
 const GAME_FIELDS = [
   "name", "slug", "summary", "url", "first_release_date", "cover.image_id",
+  "artworks.image_id", "artworks.width", "artworks.height", "screenshots.image_id",
   "platforms.name", "platforms.abbreviation", "genres.name", "game_modes.name",
   "multiplayer_modes.onlinemax", "multiplayer_modes.offlinemax",
   "multiplayer_modes.onlinecoopmax", "multiplayer_modes.offlinecoopmax",

@@ -6,7 +6,7 @@ import { players } from "../lib/format";
 import { Avatar, AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
 import { TierIcon } from "./TierIcon";
-import { Chip, Cover } from "./ui";
+import { Chip, Cover, HeroImage } from "./ui";
 
 export interface ViewProps {
   games: ArcadeGame[];
@@ -146,40 +146,36 @@ function RateButton({ game, myId, onSet }: { game: ArcadeGame; myId: string; onS
 
 export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+    <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
         const top = g.interests.reduce<InterestLevel>((m, i) => (i.level > m ? i.level : m), 1);
         const pl = players(g);
+        const plats = g.platforms.length > 3 ? [...g.platforms.slice(0, 3), `+${g.platforms.length - 3}`] : g.platforms;
         return (
           <li key={g.igdbId}>
+            {/* the whole card is a square: wide image on top, details underneath */}
             <article
               onClick={() => onOpen(g)}
-              className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-line bg-panel transition hover:-translate-y-0.5 hover:border-keen/60"
+              className="group flex aspect-square cursor-pointer flex-col overflow-hidden rounded-2xl border border-line bg-panel transition hover:-translate-y-0.5 hover:border-keen/60"
               style={{ boxShadow: `0 10px 30px -18px ${INTEREST_LEVELS[top].color}` }}
             >
-              <div className="relative aspect-[3/4] overflow-hidden">
-                <Cover imageId={g.coverImageId} name={g.name} className="h-full w-full transition group-hover:scale-[1.03]" />
+              <div className="relative min-h-0 flex-1 overflow-hidden">
+                <HeroImage game={g} className="h-full w-full transition group-hover:scale-[1.03]" />
                 {pl && (
-                  <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
-                    👥 {pl}
+                  <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+                    <TierIcon name="group" color="currentColor" size={14} /> {pl}
                   </span>
                 )}
               </div>
-              <div className="flex flex-1 flex-col gap-2 p-3">
-                <div>
-                  <h3 className="line-clamp-2 font-display font-bold leading-tight">
-                    <button className="text-left" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>{g.name}</button>
+              <div className="flex shrink-0 flex-col gap-2 p-3">
+                <div className="min-w-0">
+                  <h3 className="truncate font-display font-bold leading-tight">
+                    <button className="max-w-full truncate text-left" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>{g.name}</button>
                   </h3>
-                  <p className="mt-0.5 text-xs text-faint">
-                    {g.releaseYear}
-                  </p>
+                  <p className="mt-0.5 truncate text-xs text-faint">{[g.releaseYear, plats.join(" · ")].filter(Boolean).join(" — ")}</p>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {g.platforms.slice(0, 3).map((p) => <Chip key={p}>{p}</Chip>)}
-                  {g.platforms.length > 3 && <Chip>+{g.platforms.length - 3}</Chip>}
-                </div>
-                <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-1">
-                  <AvatarStack people={peopleOf(g, users)} max={4} size={28} />
+                <div className="flex items-center justify-between gap-2">
+                  <AvatarStack people={peopleOf(g, users)} max={5} size={26} />
                   <RateButton game={g} myId={myId} onSet={onSet} />
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import raw from "./__fixtures__/game.json";
-import { cleanQuery, toGame, toSearchHit, type RawGame } from "./map";
+import { cleanQuery, heroImage, toGame, toSearchHit, type RawGame } from "./map";
 
 describe("toGame", () => {
   const game = toGame(raw as RawGame);
@@ -37,5 +37,13 @@ describe("search", () => {
     expect(cleanQuery('halo"; fields *; where id > 0;')).toBe("halo fields * where id > 0");
     expect(cleanQuery("  a\\b  ")).toBe("a b");
     expect(cleanQuery("x".repeat(200))).toHaveLength(80);
+  });
+});
+
+describe("heroImage", () => {
+  it("prefers a landscape artwork, then a screenshot, then nothing", () => {
+    expect(heroImage({ id: 1, name: "x", artworks: [{ image_id: "tall", width: 600, height: 900 }, { image_id: "wide", width: 1920, height: 1080 }], screenshots: [{ image_id: "sc" }] })).toBe("wide");
+    expect(heroImage({ id: 1, name: "x", artworks: [{ image_id: "tall", width: 600, height: 900 }], screenshots: [{ image_id: "sc" }] })).toBe("sc");
+    expect(heroImage({ id: 1, name: "x" })).toBeNull();
   });
 });

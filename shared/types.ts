@@ -61,6 +61,7 @@ export interface Game {
   name: string;
   slug: string;
   coverImageId: string | null;
+  heroImageId: string | null; // a wide image (artwork, else screenshot) for the card
   releaseYear: number | null;
   summary: string | null;
   platforms: string[];
