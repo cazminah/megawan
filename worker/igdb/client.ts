@@ -52,6 +52,12 @@ async function query<T>(db: Db, env: Creds, endpoint: string, body: string): Pro
   return (await res.json()) as T;
 }
 
+// IGDB game_type ids worth showing in search (from /v4/game_types): main game,
+// bundle, standalone expansion, remake, remaster, expanded game, port. hides DLC,
+// expansions, mods, episodes, seasons, forks, packs/add-ons and updates.
+// (minecraft is a "port" in IGDB, so ports have to stay in.)
+export const PLAYABLE_TYPES = [0, 3, 4, 8, 9, 10, 11].join(",");
+
 export async function searchGames(db: Db, env: Creds, q: string) {
   const term = cleanQuery(q);
   if (term.length < 2) return [];
@@ -59,7 +65,7 @@ export async function searchGames(db: Db, env: Creds, q: string) {
     db,
     env,
     "games",
-    `search "${term}"; fields name,cover.image_id,first_release_date,platforms.name,platforms.abbreviation; where version_parent = null; limit 12;`,
+    `search "${term}"; fields name,cover.image_id,first_release_date,platforms.name,platforms.abbreviation; where version_parent = null & game_type = (${PLAYABLE_TYPES}); limit 12;`,
   );
   return raw.map(toSearchHit);
 }
