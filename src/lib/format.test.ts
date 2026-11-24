@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { playersLong, playersShort, primaryGenre } from "./format";
 
-const g = (o: Partial<Parameters<typeof playersShort>[0]>) => ({
-  onlineMax: null, offlineMax: null, onlineCoop: false, offlineCoop: false, gameModes: [] as string[], ...o,
-});
+const g = (o: Partial<Parameters<typeof playersShort>[0]>) => ({ onlineMax: null, gameModes: [] as string[], ...o });
 
 describe("players", () => {
-  it("shows a range when IGDB has counts", () => {
+  it("shows a range from the online player count", () => {
     expect(playersShort(g({ onlineMax: 4, gameModes: ["Single player", "Multiplayer"] }))).toEqual({ text: "1–4", solo: false });
-    expect(playersShort(g({ onlineMax: 10, offlineMax: 4, gameModes: ["Multiplayer"] }))).toEqual({ text: "2–10", solo: false });
+    expect(playersShort(g({ onlineMax: 10, gameModes: ["Multiplayer"] }))).toEqual({ text: "2–10", solo: false });
   });
 
-  it("falls back to the mode when there are no counts", () => {
+  it("falls back to the mode when there's no online count", () => {
     expect(playersShort(g({ gameModes: ["Single player", "Co-operative"] }))?.text).toBe("co-op");
     expect(playersShort(g({ gameModes: ["Multiplayer"] }))?.text).toBe("multiplayer");
     expect(playersShort(g({ gameModes: ["Massively Multiplayer Online (MMO)", "Multiplayer"] }))?.text).toBe("MMO");
@@ -19,10 +17,11 @@ describe("players", () => {
     expect(playersShort(g({}))).toBeNull();
   });
 
-  it("spells it out for the detail view, never as 'N online'", () => {
-    const long = playersLong(g({ onlineMax: 4, offlineMax: 2, onlineCoop: true, gameModes: ["Single player", "Co-operative", "Split screen"] }));
-    expect(long).toBe("1–4 players · up to 4 online · up to 2 local · co-op · split screen");
+  it("detail line: range, then every game mode — no 'up to N online' duplicate", () => {
+    expect(playersLong(g({ onlineMax: 4, gameModes: ["Co-operative", "Single player", "Split screen", "Multiplayer"] })))
+      .toBe("1–4 players · single player · multiplayer · co-op · split screen");
     expect(playersLong(g({ gameModes: ["Single player"] }))).toBe("single player");
+    expect(playersLong(g({}))).toBeNull();
   });
 });
 

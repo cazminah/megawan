@@ -60,10 +60,11 @@ describe("filters", () => {
     expect(run({ genres: ["RPG"] })).toEqual(["Baldur's Gate 3"]);
     expect(run({ themes: ["Comedy"] })).toEqual(["Overcooked 2"]);
   });
-  it("works for N players, and modes", () => {
+  it("works for N players (online counts only), and game modes", () => {
     expect(run({ players: 8 })).toEqual(["Among Us"]);
-    expect(run({ modes: "local" })).toEqual(["Overcooked 2"]);
-    expect(run({ modes: "coop", sort: "az" })).toEqual(["Baldur's Gate 3", "Overcooked 2"]);
+    expect(run({ players: 4, sort: "az" })).toEqual(["Among Us", "Baldur's Gate 3"]); // overcooked's 4 are local only
+    expect(run({ gameModes: ["Split screen"] })).toEqual(["Overcooked 2"]);
+    expect(run({ gameModes: ["Co-operative"], sort: "az" })).toEqual(["Baldur's Gate 3", "Overcooked 2"]);
   });
   it("duration fits: someone's up for that long", () => {
     expect(run({ duration: 0, sort: "az" })).toEqual(["Among Us", "Overcooked 2"]);
@@ -80,7 +81,7 @@ describe("filters", () => {
   });
   it("counts active filters (not text/sort/group)", () => {
     expect(activeFilterCount({ ...DEFAULT_FILTERS, text: "x", sort: "az", groupBy: "genre" })).toBe(0);
-    expect(activeFilterCount({ ...DEFAULT_FILTERS, platforms: ["PC"], duration: 1, freeToPlay: true })).toBe(3);
+    expect(activeFilterCount({ ...DEFAULT_FILTERS, platforms: ["PC"], gameModes: ["Co-operative"], duration: 1, freeToPlay: true })).toBe(4);
   });
 });
 
@@ -94,8 +95,9 @@ describe("grouping", () => {
   it("by group size, in size order", () => {
     expect(groupGames(sorted, "size").map((g) => [g.label, names(g.games)])).toEqual([
       ["solo", ["Celeste"]],
-      ["2–4 players", ["Overcooked 2", "Baldur's Gate 3"]],
+      ["2–4 players", ["Baldur's Gate 3"]],
       ["9+ players", ["Among Us"]],
+      ["group size unknown", ["Overcooked 2"]],
     ]);
   });
   it("by keenness: top vote, keenest first", () => {

@@ -7,7 +7,7 @@ import { TierIcon } from "../components/TierIcon";
 import { Button, Chip, ErrorNote, Modal } from "../components/ui";
 import { useArcade } from "../lib/arcade";
 import { useFlip } from "../lib/flip";
-import { shortGenre } from "../lib/format";
+import { MODE_LABELS, modeLabel, shortGenre } from "../lib/format";
 import {
   activeFilterCount, applyFilters, DEFAULT_FILTERS, explainTokens, facet, groupGames,
   type Filters, type GroupBy, type Sort, type TokenKind,
@@ -128,6 +128,10 @@ export function Arcade({ me }: { me: Me }) {
   const platforms = useMemo(() => facet(games, (g) => g.platforms), [games]);
   const genres = useMemo(() => facet(games, (g) => g.genres.map(shortGenre)), [games]);
   const themes = useMemo(() => facet(games, (g) => g.themes), [games]);
+  const modes = useMemo(() => {
+    const present = new Set(games.flatMap((g) => g.gameModes));
+    return MODE_LABELS.map(([k]) => k).filter((k) => present.has(k));
+  }, [games]);
   const voters = useMemo(() => {
     const ids = new Set(games.flatMap((g) => g.interests.map((i) => i.userId)));
     return [...ids].map((id) => users[id]).filter((u): u is PublicUser => !!u).sort((a, b) => a.username.localeCompare(b.username));
@@ -139,7 +143,7 @@ export function Arcade({ me }: { me: Me }) {
   );
   const open = games.find((g) => g.igdbId === openId) ?? null;
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setFilters((f) => ({ ...f, [k]: v }));
-  const toggle = (k: "platforms" | "genres" | "themes" | "people", v: string) =>
+  const toggle = (k: "platforms" | "genres" | "themes" | "people" | "gameModes", v: string) =>
     setFilters((f) => ({ ...f, [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v] }));
   const nActive = activeFilterCount(filters);
   const clearFilters = () => setFilters((f) => ({ ...DEFAULT_FILTERS, text: f.text, sort: f.sort, groupBy: f.groupBy }));
@@ -213,6 +217,14 @@ export function Arcade({ me }: { me: Me }) {
               </div>
             </fieldset>
           )}
+          {modes.length > 0 && (
+            <fieldset>
+              <legend className={legendCls}>mode</legend>
+              <div className="flex flex-wrap gap-1.5">
+                {modes.map((m) => <Chip key={m} active={filters.gameModes.includes(m)} onClick={() => toggle("gameModes", m)}>{modeLabel(m)}</Chip>)}
+              </div>
+            </fieldset>
+          )}
           {themes.length > 0 && (
             <fieldset>
               <legend className={legendCls}>theme</legend>
@@ -250,12 +262,6 @@ export function Arcade({ me }: { me: Me }) {
                 {[2, 3, 4, 5, 6, 8, 10, 12, 16].map((n) => <option key={n} value={n}>{n} players</option>)}
               </select>
             </label>
-            <select value={filters.modes} onChange={(e) => set("modes", e.target.value as Filters["modes"])} className={selectCls} aria-label="how you play together">
-              <option value="any">online or local</option>
-              <option value="online">online</option>
-              <option value="local">local / couch</option>
-              <option value="coop">co-op</option>
-            </select>
             <label className="flex items-center gap-2 text-sm text-dim">
               at least
               <select value={filters.minHeadcount} onChange={(e) => set("minHeadcount", Number(e.target.value))} className={selectCls}>

@@ -255,8 +255,48 @@ function MetaRow({ game, platforms }: { game: ArcadeGame; platforms: string[] })
   );
 }
 
-/** click-to-load: nothing from youtube loads (or plays) until you ask for it */
+/** two lines, with "more" to expand (IGDB has no shorter blurb than `summary`) */
+function Summary({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+  return (
+    <div className="text-sm leading-relaxed text-dim">
+      <p ref={ref} className={open ? "" : "line-clamp-2"}>{text}</p>
+      {(clamped || open) && (
+        <button type="button" onClick={() => setOpen((o) => !o)} className="mt-0.5 text-xs text-faint hover:text-ink">
+          {open ? "less" : "more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** collapsed by default; once opened it's still click-to-load, so nothing from
+ *  youtube loads (or plays) until you ask for it */
 function Trailer({ id, name }: { id: string; name: string }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={shown}
+        onClick={() => setShown((s) => !s)}
+        className="flex items-center gap-1.5 text-sm font-semibold text-dim hover:text-ink"
+      >
+        <span className={`inline-block text-xs transition-transform ${shown ? "rotate-90" : ""}`}>▶</span>
+        trailer
+      </button>
+      {shown && <div className="mt-2"><TrailerPlayer id={id} name={name} /></div>}
+    </div>
+  );
+}
+
+function TrailerPlayer({ id, name }: { id: string; name: string }) {
   const [playing, setPlaying] = useState(false);
   return (
     <div className="relative aspect-video overflow-hidden rounded-xl bg-bg">
@@ -309,7 +349,7 @@ export function GameDetail({ game, users, myId }: { game: ArcadeGame; users: Rec
         </div>
       </div>
 
-      {game.summary && <p className="line-clamp-5 text-sm leading-relaxed text-dim">{game.summary}</p>}
+      {game.summary && <Summary text={game.summary} />}
 
       {game.trailerYoutubeId && <Trailer id={game.trailerYoutubeId} name={game.name} />}
 

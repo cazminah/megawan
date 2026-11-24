@@ -6,7 +6,6 @@ import { maxPlayers, primaryGenre, shortGenre } from "./format";
 
 export type Sort = "hype" | "people" | "recent" | "year" | "az";
 export type GroupBy = "none" | "genre" | "size" | "keenness";
-export type Modes = "any" | "online" | "local" | "coop";
 export type MyVote = "any" | "voted" | "not-voted";
 
 export interface Filters {
@@ -15,7 +14,7 @@ export interface Filters {
   genres: string[]; // short names, match any of the game's genres
   themes: string[]; // match any
   players: number; // "works for N of us" — 0 = any
-  modes: Modes;
+  gameModes: string[]; // IGDB game_modes, match any
   duration: number | null; // index into DURATIONS: someone's up for that long
   people: string[]; // user ids: games every one of them has voted on
   minHeadcount: number; // 0 = any
@@ -31,7 +30,7 @@ export const DEFAULT_FILTERS: Filters = {
   genres: [],
   themes: [],
   players: 0,
-  modes: "any",
+  gameModes: [],
   duration: null,
   people: [],
   minHeadcount: 0,
@@ -44,8 +43,8 @@ export const DEFAULT_FILTERS: Filters = {
 /** filters that count towards the "filters · N" badge (text, sort and grouping don't) */
 export function activeFilterCount(f: Filters) {
   return (
-    f.platforms.length + f.genres.length + f.themes.length + f.people.length +
-    (f.players ? 1 : 0) + (f.modes !== "any" ? 1 : 0) + (f.duration !== null ? 1 : 0) +
+    f.platforms.length + f.genres.length + f.themes.length + f.people.length + f.gameModes.length +
+    (f.players ? 1 : 0) + (f.duration !== null ? 1 : 0) +
     (f.minHeadcount ? 1 : 0) + (f.myVote !== "any" ? 1 : 0) + (f.freeToPlay ? 1 : 0)
   );
 }
@@ -55,21 +54,18 @@ export function activeFilterCount(f: Filters) {
 
 export type TokenKind = "year" | "platform" | "genre" | "theme" | "mode" | "name";
 
-const coop = (g: ArcadeGame) => g.onlineCoop || g.offlineCoop || g.gameModes.includes("Co-operative");
-const local = (g: ArcadeGame) => (g.offlineMax ?? 0) > 1 || g.offlineCoop || g.gameModes.includes("Split screen");
-const online = (g: ArcadeGame) => (g.onlineMax ?? 0) > 1 || g.onlineCoop;
-
+const mode = (m: string) => (g: ArcadeGame) => g.gameModes.includes(m);
 const MODE_WORDS: Record<string, (g: ArcadeGame) => boolean> = {
-  "co-op": coop,
-  coop,
+  "co-op": mode("Co-operative"),
+  coop: mode("Co-operative"),
   multiplayer: (g) => g.gameModes.includes("Multiplayer") || (maxPlayers(g) ?? 0) > 1,
-  online,
-  local,
-  couch: local,
-  split: (g) => g.gameModes.includes("Split screen"),
-  splitscreen: (g) => g.gameModes.includes("Split screen"),
-  mmo: (g) => g.gameModes.includes("Massively Multiplayer Online (MMO)"),
-  solo: (g) => g.gameModes.includes("Single player"),
+  split: mode("Split screen"),
+  splitscreen: mode("Split screen"),
+  mmo: mode("Massively Multiplayer Online (MMO)"),
+  "battle-royale": mode("Battle Royale"),
+  royale: mode("Battle Royale"),
+  solo: mode("Single player"),
+  singleplayer: mode("Single player"),
   f2p: (g) => g.freeToPlay,
   free: (g) => g.freeToPlay,
 };
@@ -112,9 +108,7 @@ export function applyFilters(games: ArcadeGame[], f: Filters, myId: string | nul
     if (f.genres.length && !g.genres.some((x) => f.genres.includes(shortGenre(x)))) return false;
     if (f.themes.length && !g.themes.some((x) => f.themes.includes(x))) return false;
     if (f.players && (maxPlayers(g) ?? 0) < f.players) return false;
-    if (f.modes === "online" && !online(g)) return false;
-    if (f.modes === "local" && !local(g)) return false;
-    if (f.modes === "coop" && !coop(g)) return false;
+    if (f.gameModes.length && !g.gameModes.some((m) => f.gameModes.includes(m))) return false;
     const d = f.duration;
     if (d !== null && !g.interests.some((i) => i.duration && i.duration.min <= d && d <= i.duration.max)) return false;
     if (f.people.length && !f.people.every((id) => g.interests.some((i) => i.userId === id))) return false;
