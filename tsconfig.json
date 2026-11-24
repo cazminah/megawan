@@ -1,0 +1,9 @@
+{
+  // editor entry point only — `npm run check` typechecks each project on its own
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.worker.json" }
+  ]
+}

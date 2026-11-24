@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["./worker-configuration.d.ts", "vite/client"]
+  },
+  "include": ["worker", "shared"],
+  "exclude": ["**/*.test.ts"]
+}

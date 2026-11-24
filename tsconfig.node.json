@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["vite.config.ts", "vitest.config.ts", "drizzle.config.ts", "scripts", "**/*.test.ts", "worker/env.d.ts"]
+}

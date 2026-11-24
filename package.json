@@ -1,0 +1,42 @@
+{
+  "name": "megawan",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite build && vite preview",
+    "check": "wrangler types >/dev/null && tsc -p tsconfig.worker.json && tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
+    "test": "vitest run",
+    "icons": "tsx scripts/icons.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply megawan --local",
+    "db:migrate:remote": "wrangler d1 migrations apply megawan --remote",
+    "cf-typegen": "wrangler types",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.21",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.1",
+    "@cloudflare/workers-types": "^5.20261124.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.7",
+    "@types/react": "^19.3.1",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "drizzle-kit": "^0.31.11",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1",
+    "wrangler": "^4.168.0"
+  }
+}

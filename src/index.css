@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #0b1020;
+  --color-panel: #121935;
+  --color-panel-2: #18214a;
+  --color-line: #263166;
+  --color-ink: #e8ebff;
+  --color-dim: #9aa3d6;
+  --color-faint: #6670a8;
+  --color-avatar: #141a33;
+
+  --color-perish: #ff4fa3;
+  --color-keen: #a05cff;
+  --color-maybe: #4aa8ff;
+}
+
+html { background: var(--color-bg); color: var(--color-ink); }
+body { font-family: var(--font-sans); min-height: 100dvh; }
+
+/* the brand gradient, low → high interest */
+.hype-gradient { background-image: linear-gradient(90deg, var(--color-maybe), var(--color-keen), var(--color-perish)); }
+.hype-text {
+  background-image: linear-gradient(90deg, var(--color-maybe), var(--color-keen), var(--color-perish));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* icon avatars: the svg is a stencil, the colour shows through it */
+.icon-mask {
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: contain; mask-size: contain;
+}
+
+:focus-visible { outline: 2px solid var(--color-keen); outline-offset: 2px; }
+
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.skeleton {
+  background: linear-gradient(90deg, var(--color-panel) 0%, var(--color-panel-2) 50%, var(--color-panel) 100%);
+  background-size: 200% 100%; animation: shimmer 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

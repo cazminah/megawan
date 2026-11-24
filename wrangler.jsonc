@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "megawan",
+  "compatibility_date": "2026-11-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./worker/index.ts",
+  "upload_source_maps": true,
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/avatars/*"]
+  },
+  // created on first deploy; uncomment once `wrangler login` is done
+  // "routes": [{ "pattern": "megawan.cazminah.me", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "megawan",
+      // placeholder until `wrangler d1 create megawan` — local dev doesn't care
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "AVATARS", "bucket_name": "megawan-avatars" }],
+  "ratelimits": [
+    // auth endpoints: 10 attempts / minute per key (username or ip)
+    { "name": "AUTH_LIMIT", "namespace_id": "4201", "simple": { "limit": 10, "period": 60 } },
+    // igdb search: 30 / 10s per user
+    { "name": "SEARCH_LIMIT", "namespace_id": "4202", "simple": { "limit": 30, "period": 10 } }
+  ],
+  // nightly tidy-up of expired sessions + reset links
+  "triggers": { "crons": ["17 4 * * *"] },
+  "vars": {
+    "APP_URL": "https://megawan.cazminah.me",
+    "MAIL_FROM": "megaWAN <noreply@cazminah.me>"
+  }
+}
