@@ -1,9 +1,19 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import type { ArcadeGame, ArcadeResponse, Game, InterestLevel, PublicUser } from "../../shared/types";
+import { DURATIONS, type ArcadeGame, type ArcadeResponse, type Game, type InterestLevel, type PublicUser } from "../../shared/types";
 import { limited, me, requireUser, router, toPublic } from "../app";
 import { games, interests, users } from "../db/schema";
 import { fetchGame, IgdbNotConfigured, searchGames } from "../igdb/client";
+
+const durationIndex = z.number().int().min(0).max(DURATIONS.length - 1);
+export const interestBody = z.object({
+  level: z.number().int().min(1, "pick a level from 1 to 5").max(5, "pick a level from 1 to 5"),
+  duration: z
+    .object({ min: durationIndex, max: durationIndex })
+    .refine((d) => d.min <= d.max, "duration's shortest can't be longer than its longest")
+    .nullable()
+    .optional(),
+});
 
 const STALE_AFTER = 30 * 24 * 60 * 60 * 1000; // re-pull IGDB data a month after we cached it
 
@@ -45,7 +55,8 @@ export const gameRoutes = router()
     const byGame = new Map<number, ArcadeGame>();
     for (const g of gameRows) byGame.set(g.igdbId, { ...(JSON.parse(g.data) as Game), addedAt: g.addedAt, interests: [] });
     for (const i of interestRows) {
-      byGame.get(i.gameId)?.interests.push({ userId: i.userId, level: i.level as InterestLevel, updatedAt: i.updatedAt });
+      const duration = i.durationMin !== null && i.durationMax !== null ? { min: i.durationMin, max: i.durationMax } : null;
+      byGame.get(i.gameId)?.interests.push({ userId: i.userId, level: i.level as InterestLevel, duration, updatedAt: i.updatedAt });
     }
     const people: Record<string, PublicUser> = {};
     for (const u of userRows) people[u.id] = toPublic(u);
@@ -55,8 +66,9 @@ export const gameRoutes = router()
 
   .put("/:igdbId/interest", async (c) => {
     const igdbId = z.coerce.number().int().positive().safeParse(c.req.param("igdbId"));
-    const level = z.object({ level: z.number().int().min(1).max(5) }).safeParse(await c.req.json().catch(() => null));
-    if (!igdbId.success || !level.success) return c.json({ error: "pick a level from 1 to 5" }, 400);
+    const body = interestBody.safeParse(await c.req.json().catch(() => null));
+    if (!igdbId.success || !body.success) return c.json({ error: body.error?.issues[0]?.message ?? "bad game id" }, 400);
+    const { level, duration } = body.data;
     const db = c.get("db");
     const now = Date.now();
 
@@ -80,10 +92,12 @@ export const gameRoutes = router()
       }
     }
 
+    // duration: omitted → leave as is, null → clear, {min,max} → set
+    const dur = duration === undefined ? {} : { durationMin: duration?.min ?? null, durationMax: duration?.max ?? null };
     await db
       .insert(interests)
-      .values({ userId: me(c).id, gameId: igdbId.data, level: level.data.level, updatedAt: now })
-      .onConflictDoUpdate({ target: [interests.userId, interests.gameId], set: { level: level.data.level, updatedAt: now } });
+      .values({ userId: me(c).id, gameId: igdbId.data, level, updatedAt: now, ...dur })
+      .onConflictDoUpdate({ target: [interests.userId, interests.gameId], set: { level, updatedAt: now, ...dur } });
     return c.json({ ok: true });
   })
 

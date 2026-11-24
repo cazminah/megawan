@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { InterestLevel, SearchHit } from "../../shared/types";
+import type { Duration, InterestLevel, SearchHit } from "../../shared/types";
 import { api } from "../lib/api";
 import { InterestPicker } from "./InterestPicker";
 import { Button, Cover, ErrorNote, Modal } from "./ui";
@@ -12,7 +12,7 @@ export function AddGameDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (hit: SearchHit, level: InterestLevel) => Promise<void>;
+  onSave: (hit: SearchHit, level: InterestLevel, duration: Duration | null | undefined) => Promise<void>;
   existing: Map<number, InterestLevel | null>; // games already in the arcade → my level there
 }) {
   const [q, setQ] = useState("");
@@ -20,13 +20,14 @@ export function AddGameDialog({
   const [searching, setSearching] = useState(false);
   const [picked, setPicked] = useState<SearchHit | null>(null);
   const [level, setLevel] = useState<InterestLevel | null>(null);
+  const [duration, setDuration] = useState<Duration | null | undefined>(undefined); // undefined = untouched
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    setQ(""); setHits([]); setPicked(null); setLevel(null); setError(null);
+    setQ(""); setHits([]); setPicked(null); setLevel(null); setDuration(undefined); setError(null);
     setTimeout(() => input.current?.focus(), 0);
   }, [open]);
 
@@ -53,7 +54,7 @@ export function AddGameDialog({
     if (!picked || !level) return;
     setSaving(true);
     try {
-      await onSave(picked, level);
+      await onSave(picked, level, duration);
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -85,7 +86,7 @@ export function AddGameDialog({
               return (
                 <li key={h.igdbId}>
                   <button
-                    onClick={() => { setPicked(h); setLevel(mine ?? null); }}
+                    onClick={() => { setPicked(h); setLevel(mine ?? null); setDuration(undefined); }}
                     className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-panel-2"
                   >
                     <Cover imageId={h.coverImageId} name="" className="h-14 w-10 shrink-0 rounded-md" />
@@ -111,7 +112,7 @@ export function AddGameDialog({
               <p className="text-sm text-faint">{picked.releaseYear}</p>
             </div>
           </div>
-          <InterestPicker value={level} onChange={setLevel} busy={saving} />
+          <InterestPicker value={level} onChange={setLevel} busy={saving} duration={duration ?? null} onDuration={setDuration} />
           <ErrorNote>{error}</ErrorNote>
           <div className="flex justify-between gap-2">
             <Button variant="quiet" onClick={() => setPicked(null)}>← back</Button>

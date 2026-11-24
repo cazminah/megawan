@@ -46,6 +46,9 @@ export const interests = sqliteTable(
       .notNull()
       .references(() => games.igdbId, { onDelete: "cascade" }),
     level: integer("level").notNull(),
+    // optional "how long am i up for": indexes into DURATIONS (shared/types.ts), min <= max
+    durationMin: integer("duration_min"),
+    durationMax: integer("duration_max"),
     updatedAt: integer("updated_at").notNull(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.gameId] }), index("interests_game_idx").on(t.gameId)],

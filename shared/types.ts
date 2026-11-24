@@ -20,6 +20,17 @@ export const INTEREST_LEVELS: Record<
 
 export type InterestIconName = "neutral" | "thumb" | "heart" | "fire" | "rocket" | "skull";
 
+// how long someone's up for, per game. stored as indexes, so the labels can change freely.
+export const DURATIONS = ["30m", "1h", "2–3h", "half day", "all day"] as const;
+export interface Duration { min: number; max: number } // indexes into DURATIONS, min <= max
+
+export function durationLabel(d: Duration) {
+  const a = DURATIONS[d.min], b = DURATIONS[d.max];
+  if (!a || !b) return "";
+  const pre = (s: string) => (/^\d/.test(s) ? `~${s}` : s);
+  return d.min === d.max ? pre(a) : `${pre(a)} to ${b}`;
+}
+
 export const isLevel = (n: unknown): n is InterestLevel => LEVELS.includes(n as InterestLevel);
 
 // 18 icon colours, all bright enough to pop on the navy avatar background
@@ -73,6 +84,7 @@ export interface SearchHit {
 export interface ArcadeInterest {
   userId: string;
   level: InterestLevel;
+  duration: Duration | null;
   updatedAt: number;
 }
 

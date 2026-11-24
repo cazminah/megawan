@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ArcadeGame, InterestLevel, Me, SearchHit } from "../../shared/types";
+import type { ArcadeGame, Duration, InterestLevel, Me, SearchHit } from "../../shared/types";
 import { AddGameDialog } from "../components/AddGameDialog";
 import { GameDetail, GameGrid, GameTable } from "../components/GameViews";
 import { Button, Chip, ErrorNote, Modal } from "../components/ui";
@@ -18,7 +18,7 @@ function remember(key: string, value: string) {
 const selectCls = "rounded-xl border border-line bg-panel px-3 py-2 text-sm text-ink focus:border-keen focus:outline-none";
 
 export function Arcade({ me }: { me: Me }) {
-  const { data, error, setLevel } = useArcade(me);
+  const { data, error, setInterest } = useArcade(me);
   const [view, setView] = useState<View>(() => remembered<View>("mw:view", "grid"));
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
@@ -41,8 +41,7 @@ export function Arcade({ me }: { me: Me }) {
     setFilters((f) => ({ ...f, [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v] }));
   const nActive = activeFilterCount(filters);
 
-  const onLevel = (id: number, l: InterestLevel | null) => setLevel(id, l);
-  const onAdd = (hit: SearchHit, l: InterestLevel) => setLevel(hit.igdbId, l, hit);
+  const onAdd = (hit: SearchHit, level: InterestLevel, duration: Duration | null | undefined) => setInterest(hit.igdbId, { level, duration }, hit);
 
   return (
     <div className="space-y-5">
@@ -145,14 +144,14 @@ export function Arcade({ me }: { me: Me }) {
       ) : !shown.length ? (
         <p className="py-12 text-center text-sm text-faint">nothing matches those filters.</p>
       ) : view === "grid" ? (
-        <GameGrid games={shown} users={data!.users} myId={me.id} onLevel={onLevel} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
+        <GameGrid games={shown} users={data!.users} myId={me.id} onSet={setInterest} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
       ) : (
-        <GameTable games={shown} users={data!.users} myId={me.id} onLevel={onLevel} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
+        <GameTable games={shown} users={data!.users} myId={me.id} onSet={setInterest} onOpen={(g: ArcadeGame) => setOpenId(g.igdbId)} />
       )}
 
       <AddGameDialog open={adding} onClose={() => setAdding(false)} onSave={onAdd} existing={existing} />
       <Modal open={!!open} onClose={() => setOpenId(null)} title={open?.name ?? ""} wide>
-        {open && data && <GameDetail game={open} users={data.users} myId={me.id} onLevel={onLevel} />}
+        {open && data && <GameDetail game={open} users={data.users} myId={me.id} onSet={setInterest} />}
       </Modal>
     </div>
   );

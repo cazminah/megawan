@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { INTEREST_LEVELS, LEVELS, type ArcadeGame, type InterestLevel, type PublicUser } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, type ArcadeGame, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import type { InterestPatch, SetInterest } from "../lib/arcade";
 import { players } from "../lib/format";
 import { AvatarStack } from "./Avatar";
 import { InterestPicker } from "./InterestPicker";
@@ -11,21 +12,28 @@ export interface ViewProps {
   games: ArcadeGame[];
   users: Record<string, PublicUser>;
   myId: string;
-  onLevel: (igdbId: number, level: InterestLevel | null) => Promise<void>;
+  onSet: SetInterest;
   onOpen: (g: ArcadeGame) => void;
 }
 
 const peopleOf = (g: ArcadeGame, users: Record<string, PublicUser>) =>
   g.interests.flatMap((i) => (users[i.userId] ? [{ user: users[i.userId]!, level: i.level }] : []));
 
-/** the little "+" / your-level button that pops the picker */
-function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; onLevel: ViewProps["onLevel"] }) {
-  const mine = game.interests.find((i) => i.userId === myId)?.level ?? null;
+/** the little "+" / your-level button that pops THE picker */
+function RateButton({ game, myId, onSet }: { game: ArcadeGame; myId: string; onSet: SetInterest }) {
+  const vote = game.interests.find((i) => i.userId === myId);
+  const mine = vote?.level ?? null;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  // the duration slider updates this draft live and saves after a short pause,
+  // so dragging across five notches is one request, not five
+  const [draft, setDraft] = useState<Duration | null | undefined>(undefined);
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const btn = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLDivElement>(null);
+  const duration = draft === undefined ? (vote?.duration ?? null) : draft;
 
   // the popover lives in a portal on <body> (cards clip + transform their children),
   // so place it by hand: above the button if it fits, else below, kept on screen
@@ -34,18 +42,36 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
     const b = btn.current.getBoundingClientRect();
     const p = pop.current.getBoundingClientRect();
     const left = Math.min(Math.max(8, b.right - p.width), window.innerWidth - p.width - 8);
-    const top = b.top - p.height - 8 >= 8 ? b.top - p.height - 8 : Math.min(b.bottom + 8, window.innerHeight - p.height - 8);
+    const top = b.top - p.height - 8 >= 8 ? b.top - p.height - 8 : Math.max(8, Math.min(b.bottom + 8, window.innerHeight - p.height - 8));
     setPos({ left, top });
-  }, [open]);
+  }, [open, mine, duration !== null]);
+
+  const save = (patch: InterestPatch) => {
+    setError(null);
+    return onSet(game.igdbId, patch).catch((e: Error) => setError(e.message));
+  };
+
+  const flush = () => {
+    if (!pending.current) return;
+    clearTimeout(pending.current);
+    pending.current = null;
+    if (mine && draft !== undefined) void save({ level: mine, duration: draft });
+  };
+
+  const close = () => {
+    flush();
+    setOpen(false);
+    setDraft(undefined);
+  };
 
   useEffect(() => {
     if (!open) return;
     const outside = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (!pop.current?.contains(t) && !btn.current?.contains(t)) setOpen(false);
+      if (!pop.current?.contains(t) && !btn.current?.contains(t)) close();
     };
-    const key = (e: KeyboardEvent) => e.key === "Escape" && (setOpen(false), btn.current?.focus());
-    const away = () => setOpen(false);
+    const key = (e: KeyboardEvent) => e.key === "Escape" && (close(), btn.current?.focus());
+    const away = () => close();
     document.addEventListener("mousedown", outside);
     document.addEventListener("keydown", key);
     window.addEventListener("scroll", away, { passive: true });
@@ -56,11 +82,25 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
       window.removeEventListener("scroll", away);
       window.removeEventListener("resize", away);
     };
-  }, [open]);
+  });
 
-  const set = async (l: InterestLevel | null) => {
+  const setLevel = async (l: InterestLevel | null) => {
+    if (pending.current) { clearTimeout(pending.current); pending.current = null; }
     setBusy(true);
-    try { await onLevel(game.igdbId, l); setOpen(false); } finally { setBusy(false); }
+    try {
+      await save(l ? { level: l, ...(draft !== undefined ? { duration: draft } : {}) } : { level: null });
+      if (!l) close();
+    } finally { setBusy(false); }
+  };
+
+  const setDuration = (d: Duration | null) => {
+    setDraft(d);
+    if (!mine) return;
+    if (pending.current) clearTimeout(pending.current);
+    pending.current = setTimeout(() => {
+      pending.current = null;
+      void save({ level: mine, duration: d });
+    }, 450);
   };
 
   const color = mine ? INTEREST_LEVELS[mine].color : undefined;
@@ -69,7 +109,7 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
       <button
         ref={btn}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={mine ? `your interest: ${INTEREST_LEVELS[mine].label} — change` : "say how keen you are"}
         className="grid h-9 w-9 place-items-center rounded-full border-2 text-lg font-bold transition hover:scale-110"
@@ -88,7 +128,15 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
             style={pos ?? { left: -9999, top: 0, visibility: "hidden" }}
           >
             <p className="mb-3 truncate font-display text-sm font-semibold">{game.name}</p>
-            <InterestPicker value={mine} onChange={set} onClear={() => set(null)} busy={busy} />
+            <InterestPicker
+              value={mine}
+              onChange={setLevel}
+              onClear={() => setLevel(null)}
+              busy={busy}
+              duration={duration}
+              onDuration={setDuration}
+            />
+            {error && <p role="alert" className="mt-2 text-xs text-perish">{error}</p>}
           </div>,
           document.body,
         )}
@@ -96,7 +144,7 @@ function RateButton({ game, myId, onLevel }: { game: ArcadeGame; myId: string; o
   );
 }
 
-export function GameGrid({ games, users, myId, onLevel, onOpen }: ViewProps) {
+export function GameGrid({ games, users, myId, onSet, onOpen }: ViewProps) {
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
@@ -132,7 +180,7 @@ export function GameGrid({ games, users, myId, onLevel, onOpen }: ViewProps) {
                 </div>
                 <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-1">
                   <AvatarStack people={peopleOf(g, users)} max={4} size={28} />
-                  <RateButton game={g} myId={myId} onLevel={onLevel} />
+                  <RateButton game={g} myId={myId} onSet={onSet} />
                 </div>
               </div>
             </article>
@@ -143,7 +191,7 @@ export function GameGrid({ games, users, myId, onLevel, onOpen }: ViewProps) {
   );
 }
 
-export function GameTable({ games, users, myId, onLevel, onOpen }: ViewProps) {
+export function GameTable({ games, users, myId, onSet, onOpen }: ViewProps) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
       <table className="w-full min-w-[760px] text-left text-sm">
@@ -174,7 +222,7 @@ export function GameTable({ games, users, myId, onLevel, onOpen }: ViewProps) {
               <td className="whitespace-nowrap px-3 py-2 text-dim">{players(g) ?? "solo"}</td>
               <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
-              <td className="px-3 py-2"><RateButton game={g} myId={myId} onLevel={onLevel} /></td>
+              <td className="px-3 py-2"><RateButton game={g} myId={myId} onSet={onSet} /></td>
             </tr>
           ))}
         </tbody>
@@ -183,10 +231,10 @@ export function GameTable({ games, users, myId, onLevel, onOpen }: ViewProps) {
   );
 }
 
-export function GameDetail({ game, users, myId, onLevel }: { game: ArcadeGame } & Omit<ViewProps, "games" | "onOpen">) {
+export function GameDetail({ game, users, myId, onSet }: { game: ArcadeGame } & Omit<ViewProps, "games" | "onOpen">) {
   const mine = game.interests.find((i) => i.userId === myId)?.level ?? null;
   const [busy, setBusy] = useState(false);
-  const set = async (l: InterestLevel | null) => { setBusy(true); try { await onLevel(game.igdbId, l); } finally { setBusy(false); } };
+  const set = async (l: InterestLevel | null) => { setBusy(true); try { await onSet(game.igdbId, { level: l }); } finally { setBusy(false); } };
   const levels = [...LEVELS].reverse();
 
   return (

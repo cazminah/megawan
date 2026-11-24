@@ -3,6 +3,5 @@
   "compilerOptions": {
     "types": ["./worker-configuration.d.ts", "vite/client"]
   },
-  "include": ["worker", "shared"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["worker", "shared"]
 }

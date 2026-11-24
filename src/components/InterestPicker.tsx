@@ -1,4 +1,5 @@
-import { INTEREST_LEVELS, LEVELS, type InterestLevel } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, durationLabel, type Duration, type InterestLevel } from "../../shared/types";
+import { DurationSlider } from "./DurationSlider";
 import { TierIcon } from "./TierIcon";
 
 const TRACK = `linear-gradient(90deg, ${LEVELS.map((l) => INTEREST_LEVELS[l].color).join(", ")})`;
@@ -12,11 +13,15 @@ export function InterestPicker({
   onChange,
   onClear,
   busy,
+  duration,
+  onDuration,
 }: {
   value: InterestLevel | null;
   onChange: (l: InterestLevel) => void;
   onClear?: () => void;
   busy?: boolean;
+  duration?: Duration | null;
+  onDuration?: (d: Duration | null) => void; // leave out to hide the duration bit
 }) {
   const idx = value ? LEVELS.indexOf(value) : -1;
   return (
@@ -75,6 +80,7 @@ export function InterestPicker({
           );
         })}
       </div>
+      {onDuration && <DurationSection level={value} duration={duration ?? null} onDuration={onDuration} />}
       {value && onClear && (
         <div className="mt-2 text-right">
           <button type="button" onClick={onClear} className="text-xs text-faint underline-offset-2 hover:text-ink hover:underline">
@@ -82,6 +88,53 @@ export function InterestPicker({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** optional "how long are you up for?" — faded until you switch it on */
+function DurationSection({
+  level,
+  duration,
+  onDuration,
+}: {
+  level: InterestLevel | null;
+  duration: Duration | null;
+  onDuration: (d: Duration | null) => void;
+}) {
+  const accent = level ? INTEREST_LEVELS[level].color : "var(--color-dim)";
+  if (!duration) {
+    return (
+      <button
+        type="button"
+        disabled={!level}
+        onClick={() => onDuration({ min: 1, max: 1 })}
+        className="mt-4 flex w-full items-center gap-2 rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm text-faint opacity-70 transition hover:opacity-100 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+      >
+        <TierIcon name="timer" color="currentColor" size={18} />
+        <span className="flex-1">how long are you up for? <span className="text-xs">(optional)</span></span>
+        <span aria-hidden="true" className="text-lg leading-none">＋</span>
+      </button>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-xl border border-line bg-bg/60 px-2 pb-2 pt-2.5">
+      <div className="mb-1 flex items-center justify-between px-1 text-sm">
+        <span>
+          <span className="text-faint">up for </span>
+          <span className="font-semibold">{durationLabel(duration)}</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => onDuration(null)}
+          aria-label="clear how long you're up for"
+          className="rounded-md px-1.5 text-faint hover:bg-panel-2 hover:text-ink"
+        >
+          ✕
+        </button>
+      </div>
+      <DurationSlider value={duration} onChange={onDuration} accent={accent} />
+      <p className="mt-1 px-1 text-[11px] text-faint">drag the ends apart for a range</p>
     </div>
   );
 }

@@ -4,5 +4,5 @@
     "types": ["node"],
     "lib": ["ES2023", "DOM"]
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "drizzle.config.ts", "scripts", "**/*.test.ts", "worker/env.d.ts"]
+  "include": ["vite.config.ts", "vitest.config.ts", "drizzle.config.ts", "scripts", "src/**/*.test.ts", "shared/**/*.test.ts"]
 }
