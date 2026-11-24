@@ -1,5 +1,4 @@
-import { INTEREST_LEVELS, LEVELS, durationLabel, type Duration, type InterestLevel } from "../../shared/types";
-import { DurationSlider } from "./DurationSlider";
+import { DURATIONS, INTEREST_LEVELS, LEVELS, durationLabel, type Duration, type InterestLevel } from "../../shared/types";
 import { TierIcon } from "./TierIcon";
 
 const TRACK = `linear-gradient(90deg, ${LEVELS.map((l) => INTEREST_LEVELS[l].color).join(", ")})`;
@@ -92,7 +91,11 @@ export function InterestPicker({
   );
 }
 
-/** optional "how long are you up for?" — faded until you switch it on */
+/**
+ * optional "how long are you up for?": three segments (a bit · few hours · all day).
+ * faded until you tap one. tap one = that; with one picked, tap another = the
+ * range between them; tap again = start over from that one. ✕ clears it.
+ */
 function DurationSection({
   level,
   duration,
@@ -102,39 +105,49 @@ function DurationSection({
   duration: Duration | null;
   onDuration: (d: Duration | null) => void;
 }) {
-  const accent = level ? INTEREST_LEVELS[level].color : "var(--color-dim)";
-  if (!duration) {
-    return (
-      <button
-        type="button"
-        disabled={!level}
-        onClick={() => onDuration({ min: 1, max: 1 })}
-        className="mt-4 flex w-full items-center gap-2 rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm text-faint opacity-70 transition hover:opacity-100 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
-      >
-        <TierIcon name="timer" color="currentColor" size={18} />
-        <span className="flex-1">how long are you up for? <span className="text-xs">(optional)</span></span>
-        <span aria-hidden="true" className="text-lg leading-none">＋</span>
-      </button>
-    );
-  }
+  const accent = level ? INTEREST_LEVELS[level].color : "#6670a8";
+  const on = (i: number) => !!duration && i >= duration.min && i <= duration.max;
+  const tap = (i: number) => {
+    if (duration && duration.min === duration.max && i !== duration.min) {
+      onDuration({ min: Math.min(i, duration.min), max: Math.max(i, duration.max) });
+    } else {
+      onDuration({ min: i, max: i });
+    }
+  };
   return (
-    <div className="mt-4 rounded-xl border border-line bg-bg/60 px-2 pb-2 pt-2.5">
-      <div className="mb-1 flex items-center justify-between px-1 text-sm">
-        <span>
-          <span className="text-faint">up for </span>
-          <span className="font-semibold">{durationLabel(duration)}</span>
+    <div className={`mt-4 transition ${!level ? "pointer-events-none opacity-30" : duration ? "" : "opacity-50 hover:opacity-90"}`}>
+      <div className="mb-1.5 flex items-center justify-between text-xs">
+        <span className="text-faint">
+          {duration ? (
+            <>up for <span className="font-semibold text-ink">{durationLabel(duration)}</span></>
+          ) : (
+            <>how long are you up for? <span className="opacity-70">(optional)</span></>
+          )}
         </span>
-        <button
-          type="button"
-          onClick={() => onDuration(null)}
-          aria-label="clear how long you're up for"
-          className="rounded-md px-1.5 text-faint hover:bg-panel-2 hover:text-ink"
-        >
-          ✕
-        </button>
+        {duration && (
+          <button type="button" onClick={() => onDuration(null)} aria-label="clear how long you're up for" className="rounded-md px-1.5 text-faint hover:bg-panel-2 hover:text-ink">
+            ✕
+          </button>
+        )}
       </div>
-      <DurationSlider value={duration} onChange={onDuration} accent={accent} />
-      <p className="mt-1 px-1 text-[11px] text-faint">drag the ends apart for a range</p>
+      <div role="group" aria-label="how long are you up for?" className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-xl border border-line">
+        {DURATIONS.map((d, i) => (
+          <button
+            key={d.label}
+            type="button"
+            aria-pressed={on(i)}
+            onClick={() => tap(i)}
+            className="flex items-center justify-center gap-1.5 px-1.5 py-2 text-xs font-semibold transition"
+            style={{ background: on(i) ? `${accent}2e` : undefined, color: on(i) ? "var(--color-ink)" : "var(--color-faint)" }}
+          >
+            <TierIcon name={d.icon} color={on(i) ? accent : "currentColor"} size={18} />
+            <span className="whitespace-nowrap">
+              {d.label}
+              {d.hint && <span className="ml-1 font-normal opacity-70">{d.hint}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

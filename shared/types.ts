@@ -20,15 +20,19 @@ export const INTEREST_LEVELS: Record<
 
 export type InterestIconName = "neutral" | "thumb" | "heart" | "fire" | "rocket" | "skull";
 
-// how long someone's up for, per game. stored as indexes, so the labels can change freely.
-export const DURATIONS = ["30m", "1h", "2–3h", "half day", "all day"] as const;
+// how long someone's up for, per game. stored as indexes (0–2), so the labels
+// can change freely. `hint` is the small text after the label.
+export const DURATIONS = [
+  { label: "a bit", hint: "~1h", icon: "coffee" },
+  { label: "few hours", hint: "", icon: "pizza" },
+  { label: "all day", hint: "", icon: "moon" },
+] as const;
 export interface Duration { min: number; max: number } // indexes into DURATIONS, min <= max
 
 export function durationLabel(d: Duration) {
   const a = DURATIONS[d.min], b = DURATIONS[d.max];
   if (!a || !b) return "";
-  const pre = (s: string) => (/^\d/.test(s) ? `~${s}` : s);
-  return d.min === d.max ? pre(a) : `${pre(a)} to ${b}`;
+  return d.min === d.max ? a.label : `${a.label} to ${b.label}`;
 }
 
 export const isLevel = (n: unknown): n is InterestLevel => LEVELS.includes(n as InterestLevel);
