@@ -5,6 +5,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./worker/index.ts",
   "upload_source_maps": true,
+  // workers logs: errors + console.log show up in the dashboard (free plan: 200k events/day, 3 days kept)
+  "observability": { "enabled": true },
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
