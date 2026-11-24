@@ -17,8 +17,17 @@ export function Credits() {
       <section className="space-y-2">
         <h2 className="font-display text-lg font-bold text-ink">game data</h2>
         <p>
-          game names, covers, platforms, player counts and time-to-beat come from{" "}
+          game names, artwork, platforms and player counts come from{" "}
           <a className="text-keen hover:underline" href="https://www.igdb.com" target="_blank" rel="noopener noreferrer">IGDB</a>.
+        </p>
+      </section>
+      <section className="space-y-2">
+        <h2 className="font-display text-lg font-bold text-ink">interface icons</h2>
+        <p>
+          interest-scale and ui icons are{" "}
+          <a className="text-keen hover:underline" href="https://fonts.google.com/icons" target="_blank" rel="noopener noreferrer">Material Symbols</a>{" "}
+          by Google, used under the{" "}
+          <a className="text-keen hover:underline" href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">Apache License 2.0</a>.
         </p>
       </section>
       <section className="space-y-2">
