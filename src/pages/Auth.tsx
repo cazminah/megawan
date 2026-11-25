@@ -5,6 +5,8 @@ import { api } from "../lib/api";
 import { linkTo, navigate } from "../lib/router";
 import { currentPalette } from "../lib/palette";
 import { ColourModeToggle } from "../components/ColourMode";
+import { AvailabilityPicker } from "../components/Availability";
+import { DEFAULT_AVAILABILITY } from "../../shared/types";
 
 function Card({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
@@ -59,8 +61,9 @@ export function Register({ onAuthed }: { onAuthed: (m: Me) => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [availability, setAvailability] = useState(DEFAULT_AVAILABILITY);
   const { error, busy, submit } = useSubmit(
-    () => api.register({ username, password, email: email || undefined, palette: currentPalette() }),
+    () => api.register({ username, password, email: email || undefined, palette: currentPalette(), availability }),
     (m) => { onAuthed(m); navigate("/profile?welcome=1", true); },
   );
   return (
@@ -85,6 +88,10 @@ export function Register({ onAuthed }: { onAuthed: (m: Me) => void }) {
           onChange={(e) => setEmail(e.target.value)}
           hint="only used to reset your passphrase if you forget it"
         />
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-dim">when are you around on the day?</span>
+          <AvailabilityPicker value={availability} onChange={setAvailability} />
+        </div>
         <div className="rounded-xl border border-line bg-panel-2/40 p-3">
           <ColourModeToggle compact />
         </div>

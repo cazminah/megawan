@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Me } from "../shared/types";
 import { Avatar } from "./components/Avatar";
+import { AvailabilityIcons } from "./components/Availability";
 import { api } from "./lib/api";
 import { applyPalette, currentPalette } from "./lib/palette";
 import { linkTo, navigate, usePath } from "./lib/router";
@@ -30,7 +31,7 @@ function UserMenu({ me, onLogout }: { me: Me; onLogout: () => void }) {
       </button>
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-44 rounded-xl border border-line bg-panel p-1 shadow-2xl" onClick={() => setOpen(false)}>
-          <a href="/profile" onClick={linkTo("/profile")} className={item}>profile + avatar</a>
+          <a href="/profile" onClick={linkTo("/profile")} className={item}>profile</a>
           {me.isAdmin && <a href="/admin" onClick={linkTo("/admin")} className={item}>admin</a>}
           <button onClick={onLogout} className={item}>log out</button>
         </div>
@@ -86,7 +87,12 @@ export function App() {
         <header className="sticky top-0 z-20 border-b border-line/70 bg-bg/85 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
             <a href="/" onClick={linkTo("/")} className="hype-text font-display text-2xl font-bold tracking-tight">megaWAN</a>
-            <UserMenu me={me} onLogout={logout} />
+            <div className="flex items-center gap-3">
+              <a href="/profile" onClick={linkTo("/profile")} className="hidden rounded-lg p-1 hover:bg-panel-2 sm:block" aria-label="your availability — change it in your profile">
+                <AvailabilityIcons mask={me.availability} size={18} />
+              </a>
+              <UserMenu me={me} onLogout={logout} />
+            </div>
           </div>
         </header>
       )}

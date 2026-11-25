@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { AVATAR_BG, INTEREST_LEVELS, durationLabel, type Avatar as AvatarT, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import { AVATAR_BG, INTEREST_LEVELS, availabilityText, durationLabel, type Avatar as AvatarT, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
 import { TierIcon } from "./TierIcon";
+import { AvailabilityIcons } from "./Availability";
 
 interface Props {
   avatar: AvatarT;
@@ -81,6 +82,7 @@ function PersonLine({ p }: { p: StackPerson }) {
   const lv = INTEREST_LEVELS[p.level];
   return (
     <span className="flex items-center gap-1.5">
+      <AvailabilityIcons mask={p.user.availability} size={13} />
       <span className="font-semibold text-ink">{p.user.username}</span>
       <TierIcon name={lv.icon} color={lv.color} size={14} />
       <span style={{ color: lv.text }}>{lv.label}</span>
@@ -111,7 +113,7 @@ export function AvatarStack({ people, max = 6, size = 30 }: { people: StackPerso
           key={p.user.id}
           onMouseEnter={on(p.user.id)}
           onMouseLeave={off}
-          aria-label={`${p.user.username} — ${INTEREST_LEVELS[p.level].label}${p.duration ? `, up for ${durationLabel(p.duration)}` : ""}`}
+          aria-label={`${p.user.username} (around ${availabilityText(p.user.availability)}) — ${INTEREST_LEVELS[p.level].label}${p.duration ? `, up for ${durationLabel(p.duration)}` : ""}`}
           role="img"
           className="-ml-1.5 inline-grid"
         >

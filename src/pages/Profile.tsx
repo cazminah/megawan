@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import { iconLabel, loadIconIndex, searchIcons } from "../lib/icons";
 import { navigate } from "../lib/router";
 import { ColourModeToggle } from "../components/ColourMode";
+import { AvailabilityPicker } from "../components/Availability";
 
 const MAX_UPLOAD = 8 * 1024 * 1024; // before we shrink it — the server caps the shrunk one at 2 MB
 
@@ -196,6 +197,35 @@ function PasswordForm() {
   );
 }
 
+function AvailabilitySection({ me, onSaved }: { me: Me; onSaved: (m: Me) => void }) {
+  const [draft, setDraft] = useState(me.availability);
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dirty = draft !== me.availability;
+  const save = async () => {
+    setBusy(true); setError(null); setSaved(false);
+    try { onSaved(await api.updateMe({ availability: draft })); setSaved(true); }
+    catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  return (
+    <section className="space-y-3 rounded-2xl border border-line bg-panel p-5">
+      <div>
+        <h2 className="font-display text-lg font-bold">availability</h2>
+        <p className="text-sm text-dim">when you're around on the day — shows next to your name.</p>
+      </div>
+      <AvailabilityPicker value={draft} onChange={(m) => { setDraft(m); setSaved(false); }} />
+      <ErrorNote>{error}</ErrorNote>
+      <div className="flex items-center justify-end gap-3">
+        {saved && !dirty && <span role="status" className="text-sm font-semibold text-keen">saved ✓</span>}
+        {dirty && <span className="text-xs text-faint">unsaved changes</span>}
+        <Button disabled={!dirty || busy} onClick={save}>{busy ? "saving…" : "save"}</Button>
+      </div>
+    </section>
+  );
+}
+
 function ColourModeSection({ onSaved }: { onSaved: (m: Me) => void }) {
   const [error, setError] = useState<string | null>(null);
   const save = async (palette: PaletteName) => {
@@ -237,6 +267,7 @@ export function Profile({ me, onSaved }: { me: Me; onSaved: (m: Me) => void }) {
         <div className="flex justify-center pt-2 pb-4"><ArcadeButton /></div>
       ) : (
         <>
+          <AvailabilitySection me={me} onSaved={onSaved} />
           <ColourModeSection onSaved={onSaved} />
           <EmailForm me={me} onSaved={onSaved} />
           <PasswordForm />
