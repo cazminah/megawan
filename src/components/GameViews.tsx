@@ -40,7 +40,7 @@ function ReviveButton({ game, myId, onRevive }: { game: ArcadeGame; myId: string
 }
 
 const peopleOf = (g: ArcadeGame, users: Record<string, PublicUser>) =>
-  g.interests.flatMap((i) => (users[i.userId] ? [{ user: users[i.userId]!, level: i.level }] : []));
+  g.interests.flatMap((i) => (users[i.userId] ? [{ user: users[i.userId]!, level: i.level, duration: i.duration }] : []));
 
 /** the little "+" / your-level button that pops THE picker */
 function RateButton({ game, myId, onSet, onEditing }: { game: ArcadeGame; myId: string; onSet: SetInterest; onEditing?: ViewProps["onEditing"] }) {

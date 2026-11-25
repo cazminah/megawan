@@ -1,4 +1,7 @@
-import { AVATAR_BG, INTEREST_LEVELS, type Avatar as AvatarT, type InterestLevel, type PublicUser } from "../../shared/types";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { AVATAR_BG, INTEREST_LEVELS, durationLabel, type Avatar as AvatarT, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import { TierIcon } from "./TierIcon";
 
 interface Props {
   avatar: AvatarT;
@@ -43,37 +46,93 @@ export function Avatar({ avatar, size = 40, level, title, className = "" }: Prop
   );
 }
 
-/** overlapping row of avatars, keenest first */
-export function AvatarStack({
-  people,
-  max = 6,
-  size = 30,
-}: {
-  people: { user: PublicUser; level: InterestLevel }[];
-  max?: number;
-  size?: number;
-}) {
+export interface StackPerson {
+  user: PublicUser;
+  level: InterestLevel;
+  duration?: Duration | null;
+}
+
+/** small floating card (in a portal, so card edges can't clip it) above `anchor` */
+function HoverCard({ anchor, children }: { anchor: DOMRect; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const left = Math.min(Math.max(8, anchor.left + anchor.width / 2 - r.width / 2), window.innerWidth - r.width - 8);
+    const top = anchor.top - r.height - 8 >= 8 ? anchor.top - r.height - 8 : anchor.bottom + 8;
+    setPos({ left, top });
+  }, [anchor]);
+  return createPortal(
+    <div
+      ref={ref}
+      role="tooltip"
+      className="pointer-events-none fixed z-50 max-w-60 rounded-xl border border-line bg-panel px-3 py-2 text-xs shadow-2xl"
+      style={pos ?? { left: -9999, top: 0, visibility: "hidden" }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function PersonLine({ p }: { p: StackPerson }) {
+  const lv = INTEREST_LEVELS[p.level];
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="font-semibold text-ink">{p.user.username}</span>
+      <TierIcon name={lv.icon} color={lv.color} size={14} />
+      <span style={{ color: lv.text }}>{lv.label}</span>
+      {p.duration && <span className="text-faint">· {durationLabel(p.duration)}</span>}
+    </span>
+  );
+}
+
+/** overlapping row of avatars, keenest first. hover one for who + how keen + how long */
+export function AvatarStack({ people, max = 6, size = 30 }: { people: StackPerson[]; max?: number; size?: number }) {
   const sorted = [...people].sort((a, b) => b.level - a.level || a.user.username.localeCompare(b.user.username));
   const shown = sorted.slice(0, max);
-  const extra = sorted.length - shown.length;
+  const rest = sorted.slice(max);
+  const [hover, setHover] = useState<{ key: string; rect: DOMRect } | null>(null);
+  const on = (key: string) => (e: React.MouseEvent<HTMLElement>) => setHover({ key, rect: e.currentTarget.getBoundingClientRect() });
+  const off = () => setHover(null);
+  // a scroll moves the avatar out from under the card — just hide it
+  useEffect(() => {
+    if (!hover) return;
+    window.addEventListener("scroll", off, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", off, { capture: true });
+  }, [hover]);
+
   return (
     <div className="flex items-center pl-1">
-      {shown.map(({ user, level }) => (
-        <Avatar
-          key={user.id}
-          avatar={user.avatar}
-          level={level}
-          size={size}
-          title={`${user.username} — ${INTEREST_LEVELS[level].label}`}
-          className="-ml-1.5 border-2 border-panel"
-        />
-      ))}
-      {extra > 0 && (
+      {shown.map((p) => (
         <span
+          key={p.user.id}
+          onMouseEnter={on(p.user.id)}
+          onMouseLeave={off}
+          aria-label={`${p.user.username} — ${INTEREST_LEVELS[p.level].label}${p.duration ? `, up for ${durationLabel(p.duration)}` : ""}`}
+          role="img"
+          className="-ml-1.5 inline-grid"
+        >
+          <Avatar avatar={p.user.avatar} level={p.level} size={size} className="border-2 border-panel" />
+          {hover?.key === p.user.id && <HoverCard anchor={hover.rect}><PersonLine p={p} /></HoverCard>}
+        </span>
+      ))}
+      {rest.length > 0 && (
+        <span
+          onMouseEnter={on("rest")}
+          onMouseLeave={off}
+          aria-label={rest.map((p) => p.user.username).join(", ")}
           className="-ml-1.5 grid place-items-center rounded-full border-2 border-panel bg-panel-2 text-xs font-semibold text-dim"
           style={{ width: size, height: size }}
         >
-          +{extra}
+          +{rest.length}
+          {hover?.key === "rest" && (
+            <HoverCard anchor={hover.rect}>
+              <span className="flex flex-col gap-1">{rest.map((p) => <PersonLine key={p.user.id} p={p} />)}</span>
+            </HoverCard>
+          )}
         </span>
       )}
     </div>
