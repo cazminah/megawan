@@ -10,7 +10,7 @@ import type { Db } from "../db/client";
  * past seasons for the arcade: each game appears once, under the latest season
  * it was voted on in, and only while it has no votes this time round.
  */
-function buildArchive(byGame: Map<number, ArcadeGame>, rows: (typeof archivedInterests.$inferSelect)[]): ArchivedSeason[] {
+export function buildArchive(byGame: Map<number, ArcadeGame>, rows: (typeof archivedInterests.$inferSelect)[]): ArchivedSeason[] {
   const seasonAt = new Map<string, number>();
   const latest = new Map<number, string>(); // game → its most recent season
   for (const r of rows) {
