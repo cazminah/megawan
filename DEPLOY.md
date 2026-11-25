@@ -63,6 +63,9 @@ without IGDB keys, game search says "not set up yet". without the resend key, re
 
 ### moderation
 everything's on the **admin** page: delete a person (their votes, sessions and uploaded picture go too), swap a dodgy avatar back to a random icon, remove a game and its votes.
+
+### after the event
+admin → **after the event** → name the season (defaults to the year) → **archive the arcade**. every current vote moves into that season and the arcade starts empty; past games show faded at the bottom and anyone can bring one back. archived by mistake? hit **restore** next to the season — votes made since stay as they are.
 other admins: same SQL as step 7 with their username. to remove: `UPDATE users SET is_admin = 0 WHERE username = '…';`
 
 ### logs
