@@ -3,8 +3,61 @@ import type { AdminGame, AdminSeason, AdminUser, Me } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
 import { Button, Cover, ErrorNote } from "../components/ui";
 import { api } from "../lib/api";
+import { setEventStart, useEventStart } from "../lib/event";
+import { eventDateLabel, eventTimeLabel, londonToUtc, utcToLondon } from "../../shared/time";
 
 const day = (ms: number) => new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+/** when megaWAN starts — drives the header countdown. entered and shown in UK time */
+function EventDateSection() {
+  const startsAt = useEventStart(true);
+  const current = startsAt ? utcToLondon(startsAt) : null;
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("09:00");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (current) { setDate(current.date); setTime(current.time); }
+  }, [startsAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const save = async (value: number | null) => {
+    setMsg(null); setError(null);
+    try {
+      const r = await api.adminSetEvent(value);
+      setEventStart(r.startsAt);
+      setMsg(value ? "saved ✓ — the header countdown is live" : "cleared ✓ — no countdown in the header");
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3 rounded-2xl border border-line bg-panel p-5">
+      <h2 className="font-display text-lg font-bold">event date</h2>
+      <p className="text-sm text-dim">
+        when megaWAN starts, in UK time — everyone sees the date and a countdown in the header.
+        {startsAt ? <> currently <span className="font-semibold text-ink">{eventDateLabel(startsAt)}, {eventTimeLabel(startsAt)}</span>.</> : " not set yet."}
+      </p>
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const ms = londonToUtc(date, time);
+          if (!ms) return setError("pick a date and a start time");
+          void save(ms);
+        }}
+      >
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required aria-label="event date"
+          className="rounded-xl border border-line bg-bg px-3 py-2 text-sm [color-scheme:dark] focus:border-keen focus:outline-none" />
+        <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required aria-label="start time (UK)"
+          className="rounded-xl border border-line bg-bg px-3 py-2 text-sm [color-scheme:dark] focus:border-keen focus:outline-none" />
+        <span className="text-xs text-faint">UK time</span>
+        <Button type="submit">save date</Button>
+        {startsAt && <Button type="button" variant="ghost" onClick={() => save(null)}>clear</Button>}
+      </form>
+      {msg && <p role="status" className="text-sm font-semibold text-keen">{msg}</p>}
+      <ErrorNote>{error}</ErrorNote>
+    </section>
+  );
+}
 
 export function Admin({ me }: { me: Me }) {
   const [people, setPeople] = useState<AdminUser[] | null>(null);
@@ -44,6 +97,8 @@ export function Admin({ me }: { me: Me }) {
         <p className="mt-1 text-sm text-dim">tidy up people and games. every button asks before it does anything.</p>
       </div>
       <ErrorNote>{error}</ErrorNote>
+
+      <EventDateSection />
 
       <section className="space-y-3 rounded-2xl border border-line bg-panel p-5">
         <h2 className="font-display text-lg font-bold">after the event</h2>

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { randomAvatar, type AdminGame, type AdminSeason, type AdminUser, type Game } from "../../shared/types";
 import { me, parseAvatar, requireAdmin, requireUser, router, toPublic } from "../app";
 import { archivedInterests, games, interests, resetTokens, sessions, users } from "../db/schema";
+import { setEventStart } from "./event";
 
 const id = z.string().uuid();
 const gameId = z.coerce.number().int().positive();
@@ -90,6 +91,17 @@ export const adminRoutes = router()
       db.delete(games).where(eq(games.igdbId, gid.data)),
     ]);
     return c.json({ ok: true });
+  })
+
+  // ---- the event date (header countdown) ----
+
+  .put("/event", async (c) => {
+    const parsed = z
+      .object({ startsAt: z.number().int().min(Date.UTC(2020, 0, 1)).max(Date.UTC(2100, 0, 1)).nullable() })
+      .safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "pick a date and time" }, 400);
+    await setEventStart(c.get("db"), parsed.data.startsAt);
+    return c.json({ startsAt: parsed.data.startsAt });
   })
 
   // ---- seasons (archiving the arcade after an event) ----

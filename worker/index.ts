@@ -9,6 +9,7 @@ import { auth } from "./routes/auth";
 import { meRoutes } from "./routes/me";
 import { gameRoutes } from "./routes/games";
 import { adminRoutes } from "./routes/admin";
+import { eventRoutes } from "./routes/event";
 import { Hono } from "hono";
 
 const api = router()
@@ -16,6 +17,7 @@ const api = router()
   .route("/me", meRoutes)
   .route("/games", gameRoutes)
   .route("/admin", adminRoutes)
+  .route("/event", eventRoutes)
   .notFound((c) => c.json({ error: "not found" }, 404));
 
 const app = new Hono<AppEnv>()
