@@ -53,9 +53,9 @@ export type InterestIconName = "neutral" | "thumb" | "heart" | "fire" | "rocket"
 // how long someone's up for, per game. stored as indexes (0–2), so the labels
 // can change freely. `hint` is the small text after the label.
 export const DURATIONS = [
-  { label: "a bit", hint: "~1h", icon: "coffee" },
-  { label: "few hours", hint: "", icon: "pizza" },
-  { label: "all day", hint: "", icon: "moon" },
+  { label: "a bit", hint: "~1h", icon: "clock20" },
+  { label: "few hours", hint: "", icon: "clock60" },
+  { label: "all day", hint: "", icon: "clock90" },
 ] as const;
 export interface Duration { min: number; max: number } // indexes into DURATIONS, min <= max
 
