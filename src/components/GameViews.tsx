@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { INTEREST_LEVELS, LEVELS, alpha, durationLabel, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, alpha, durationLabel, sortPlatforms, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
 import type { InterestPatch, SetInterest } from "../lib/arcade";
 import { playersLong, playersShort, primaryGenre, shortGenre } from "../lib/format";
 import { Avatar, AvatarStack } from "./Avatar";
@@ -181,7 +181,8 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing, archive
     <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
         const top = g.interests.reduce<InterestLevel>((m, i) => (i.level > m ? i.level : m), 1);
-        const plats = g.platforms.length > 3 ? [...g.platforms.slice(0, 3), `+${g.platforms.length - 3}`] : g.platforms;
+        const sorted = sortPlatforms(g.platforms);
+        const plats = sorted.length > 3 ? [...sorted.slice(0, 3), `+${sorted.length - 3}`] : sorted;
         return (
           <li key={g.igdbId} data-flip={g.igdbId}>
             {/* the whole card is a square: wide image on top, details underneath */}
@@ -250,7 +251,7 @@ export function GameTable({ games, users, myId, onSet, onOpen, onEditing, archiv
                 </div>
               </td>
               <td className="px-3 py-2 text-dim">{g.releaseYear ?? "—"}</td>
-              <td className="max-w-48 px-3 py-2 text-dim">{g.platforms.join(", ") || "—"}</td>
+              <td className="max-w-48 px-3 py-2 text-dim">{sortPlatforms(g.platforms).join(", ") || "—"}</td>
               <td className="whitespace-nowrap px-3 py-2 text-dim"><Players game={g} /></td>
               <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).map(shortGenre).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
@@ -363,7 +364,7 @@ export function GameDetail({ game, users, myId }: { game: ArcadeGame; users: Rec
         <Cover imageId={game.coverImageId} name={game.name} className="aspect-[3/4] w-24 shrink-0 self-start rounded-xl sm:w-32" />
         <div className="min-w-0 space-y-2">
           <p className="text-sm text-faint">{[game.releaseYear, game.genres.join(", ")].filter(Boolean).join(" · ")}</p>
-          <div className="flex flex-wrap gap-1">{game.platforms.map((p) => <Chip key={p}>{p}</Chip>)}</div>
+          <div className="flex flex-wrap gap-1">{sortPlatforms(game.platforms).map((p) => <Chip key={p}>{p}</Chip>)}</div>
           {playersLong(game) && (
             <p className="flex items-center gap-1.5 text-sm text-dim">
               <TierIcon name={playersShort(game)?.solo ? "person" : "group"} color="currentColor" size={16} />

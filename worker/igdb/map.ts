@@ -1,7 +1,7 @@
 // turns raw IGDB responses into our own Game / SearchHit shapes.
 // pure functions, no fetches — easy to test against a fixture.
 
-import type { Game, SearchHit } from "../../shared/types";
+import { sortPlatforms, type Game, type SearchHit } from "../../shared/types";
 
 export interface RawPlatform { name?: string; abbreviation?: string }
 export interface RawMultiplayer {
@@ -81,7 +81,7 @@ export function toGame(raw: RawGame): Game {
     heroImageId: heroImage(raw),
     releaseYear: year(raw.first_release_date),
     summary: raw.summary ?? null,
-    platforms: [...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))],
+    platforms: sortPlatforms([...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))]),
     genres: names(raw.genres),
     themes: names(raw.themes),
     gameModes: names(raw.game_modes),
@@ -101,7 +101,7 @@ export function toSearchHit(raw: RawGame): SearchHit {
     name: raw.name,
     coverImageId: raw.cover?.image_id ?? null,
     releaseYear: year(raw.first_release_date),
-    platforms: [...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))],
+    platforms: sortPlatforms([...new Set((raw.platforms ?? []).map(platformName).filter(Boolean))]),
   };
 }
 

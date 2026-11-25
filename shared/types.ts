@@ -180,6 +180,17 @@ export function hypeScore(interests: { level: InterestLevel }[]) {
 
 export const USERNAME_RE = /^[a-z0-9_-]{3,24}$/;
 
+// platforms most people actually play on come first (IGDB's own order is random-ish:
+// Risk of Rain 2 starts "Stadia · Series X|S…"); anything rarer follows, a–z.
+const PLATFORM_ORDER = ["PC", "PS5", "Switch 2", "Switch", "Series X|S", "PS4", "XONE", "Mac", "Linux", "iOS", "Android"];
+export function sortPlatforms(platforms: string[]) {
+  const rank = (p: string) => {
+    const i = PLATFORM_ORDER.indexOf(p);
+    return i === -1 ? PLATFORM_ORDER.length : i;
+  };
+  return [...platforms].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
+
 // starter icons handed out at random on sign-up (all verified to exist in public/icons)
 export const DEFAULT_ICONS = [
   "lorc/ghost", "delapouite/floating-ghost", "lorc/dragon-head", "lorc/crowned-skull",

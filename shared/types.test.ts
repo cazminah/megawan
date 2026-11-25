@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hypeScore, INTEREST_LEVELS, LEVELS, PALETTE_NAMES, PALETTES, type InterestLevel } from "./types";
+import { hypeScore, INTEREST_LEVELS, LEVELS, PALETTE_NAMES, PALETTES, sortPlatforms, type InterestLevel } from "./types";
 
 const votes = (...ls: InterestLevel[]) => ls.map((level) => ({ level }));
 
@@ -64,3 +64,10 @@ const deltaE = (a: [number, number, number], b: [number, number, number]) => {
   const x = oklab(a), y = oklab(b);
   return Math.hypot(x[0]! - y[0]!, x[1]! - y[1]!, x[2]! - y[2]!) * 100;
 };
+
+describe("sortPlatforms", () => {
+  it("puts the common platforms first, rarer ones after a–z", () => {
+    expect(sortPlatforms(["Stadia", "Series X|S", "PS4", "PC", "PS5", "XONE", "Switch"])).toEqual(["PC", "PS5", "Switch", "Series X|S", "PS4", "XONE", "Stadia"]);
+    expect(sortPlatforms(["WiiU", "Linux", "Vita", "Switch 2", "Mac"])).toEqual(["Switch 2", "Mac", "Linux", "Vita", "WiiU"]);
+  });
+});

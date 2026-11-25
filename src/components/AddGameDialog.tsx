@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Duration, InterestLevel, SearchHit } from "../../shared/types";
+import { sortPlatforms, type Duration, type InterestLevel, type SearchHit } from "../../shared/types";
 import { api } from "../lib/api";
 import { InterestPicker } from "./InterestPicker";
 import { Button, Cover, ErrorNote, Modal } from "./ui";
@@ -95,7 +95,7 @@ export function AddGameDialog({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{h.name}</span>
                       <span className="block truncate text-xs text-faint">
-                        {[h.releaseYear, h.platforms.slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
+                        {[h.releaseYear, sortPlatforms(h.platforms).slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
                       </span>
                     </span>
                     {existing.has(h.igdbId) && <span className="shrink-0 text-xs text-keen">in the arcade</span>}
