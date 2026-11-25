@@ -14,21 +14,21 @@ export function Countdown({ compact = false }: { compact?: boolean }) {
   if (c.phase === "over") return null;
   const date = eventDateLabel(startsAt);
   const title = `megaWAN: ${date}, ${eventTimeLabel(startsAt)} (UK time)`;
-  const on = c.phase === "on";
 
   if (compact) {
     return (
-      <p title={title} className="text-center text-xs text-dim">
-        {date.replace(/^\w+ /, "").replace(/ \d{4}$/, "")} ·{" "}
-        <span className={on ? "hype-text font-bold" : "font-semibold text-ink"}>{c.short}</span>
+      <p title={title} className="text-center font-display text-base font-bold tracking-tight">
+        <span className="hype-text">{date.replace(/ \d{4}$/, "")}</span>
+        <span aria-hidden="true" className="mx-2 text-line">‖</span>
+        <span className="hype-text">{c.short}</span>
       </p>
     );
   }
   return (
-    <p title={title} className="flex items-center gap-3 whitespace-nowrap text-sm text-dim">
-      <span className="font-medium text-ink">{date}</span>
-      <span aria-hidden="true" className="text-line">‖</span>
-      {on ? <span className="hype-text font-display text-base font-bold">{c.text}</span> : <span>{c.text}</span>}
+    <p title={title} className="flex items-center gap-3 whitespace-nowrap font-display text-lg font-bold tracking-tight lg:text-2xl">
+      <span className="hype-text">{date}</span>
+      <span aria-hidden="true" className="font-normal text-line">‖</span>
+      <span className="hype-text">{c.text}</span>
     </p>
   );
 }

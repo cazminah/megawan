@@ -69,7 +69,7 @@ function HoverCard({ anchor, children }: { anchor: DOMRect; children: ReactNode 
     <div
       ref={ref}
       role="tooltip"
-      className="pointer-events-none fixed z-50 max-w-60 rounded-xl border border-line bg-panel px-3 py-2 text-xs shadow-2xl"
+      className="pointer-events-none fixed z-50 max-w-[calc(100vw-1rem)] whitespace-nowrap rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[11px] leading-tight shadow-2xl"
       style={pos ?? { left: -9999, top: 0, visibility: "hidden" }}
     >
       {children}
@@ -81,10 +81,10 @@ function HoverCard({ anchor, children }: { anchor: DOMRect; children: ReactNode 
 function PersonLine({ p }: { p: StackPerson }) {
   const lv = INTEREST_LEVELS[p.level];
   return (
-    <span className="flex items-center gap-1.5">
-      <AvailabilityIcons mask={p.user.availability} size={13} />
+    <span className="flex items-center gap-1.5 whitespace-nowrap">
+      <AvailabilityIcons mask={p.user.availability} size={12} />
       <span className="font-semibold text-ink">{p.user.username}</span>
-      <TierIcon name={lv.icon} color={lv.color} size={14} />
+      <TierIcon name={lv.icon} color={lv.color} size={12} />
       <span style={{ color: lv.text }}>{lv.label}</span>
       {p.duration && <span className="text-faint">· {durationLabel(p.duration)}</span>}
     </span>
