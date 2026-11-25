@@ -1,6 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
-import { PALETTE_NAMES, USERNAME_RE, randomAvatar } from "../../shared/types";
+import { ALL_AVAILABLE, DEFAULT_AVAILABILITY, PALETTE_NAMES, USERNAME_RE, randomAvatar } from "../../shared/types";
 import { clientIp, limited, router, toMe } from "../app";
 import { resetTokens, sessions, users } from "../db/schema";
 import { dummyHash, hashPassword, verifyPassword } from "../auth/hash";
@@ -13,6 +13,9 @@ import {
 } from "../auth/session";
 import { randomToken, sha256Hex } from "../auth/tokens";
 import { resetMail, sendMail } from "../email";
+
+// bitmask AM 1 · PM 2 · evening 4 — at least one
+export const availability = z.number().int().min(1, "pick at least one time you're around").max(ALL_AVAILABLE, "pick at least one time you're around");
 
 export const password = z.string().min(8, "passphrase needs 8+ characters").max(200);
 const username = z
@@ -37,10 +40,10 @@ export const auth = router()
   .post("/register", async (c) => {
     const over = await limited(c.env.AUTH_LIMIT, `register:${clientIp(c)}`);
     if (over) return over;
-    const parsed = z.object({ username, password, email, palette: z.enum(PALETTE_NAMES).optional() }).safeParse(await c.req.json().catch(() => null));
+    const parsed = z.object({ username, password, email, palette: z.enum(PALETTE_NAMES).optional(), availability: availability.optional() }).safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: firstError(parsed.error) }, 400);
     const db = c.get("db");
-    const { username: name, password: pw, email: mail, palette } = parsed.data;
+    const { username: name, password: pw, email: mail, palette, availability: avail } = parsed.data;
 
     const taken = await db.select({ id: users.id }).from(users).where(eq(users.username, name)).get();
     if (taken) return c.json({ error: "that username's taken" }, 409);
@@ -53,6 +56,7 @@ export const auth = router()
       avatar: JSON.stringify(randomAvatar()),
       isAdmin: false,
       palette: palette ?? "default",
+      availability: avail ?? DEFAULT_AVAILABILITY,
       createdAt: Date.now(),
     };
     try {

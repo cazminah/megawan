@@ -7,7 +7,7 @@ import { hashPassword, verifyPassword } from "../auth/hash";
 import { sha256Hex, randomToken } from "../auth/tokens";
 import { readSessionCookie } from "../auth/session";
 import { CONTENT_TYPES, MAX_AVATAR_BYTES, sniffImage } from "../avatars";
-import { email, password } from "./auth";
+import { availability, email, password } from "./auth";
 
 const iconAvatar = z.object({
   kind: z.literal("icon"),
@@ -25,13 +25,14 @@ export const meRoutes = router()
 
   .patch("/", async (c) => {
     const parsed = z
-      .object({ email, avatar: iconAvatar.optional(), palette: z.enum(PALETTE_NAMES).optional() })
+      .object({ email, avatar: iconAvatar.optional(), palette: z.enum(PALETTE_NAMES).optional(), availability: availability.optional() })
       .safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "invalid input" }, 400);
     const user = me(c);
     const patch: Partial<typeof users.$inferInsert> = {};
     if (parsed.data.email !== undefined) patch.email = parsed.data.email;
     if (parsed.data.palette) patch.palette = parsed.data.palette;
+    if (parsed.data.availability !== undefined) patch.availability = parsed.data.availability;
     if (parsed.data.avatar) {
       // icon files are static assets; make sure the one asked for actually exists.
       // (a missing file still comes back 200 — the SPA fallback serves index.html —

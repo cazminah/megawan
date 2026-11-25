@@ -45,3 +45,10 @@ describe("buildArchive", () => {
     expect(buildArchive(byGame, [row("2025", 1, "a", 100), row("2025", 2, "a", 100)])[0]!.games.map((g) => g.igdbId)).toEqual([2]);
   });
 });
+
+describe("availability input", () => {
+  it("accepts 1–7 only", async () => {
+    const { availability } = await import("./auth");
+    expect([0, 1, 3, 7, 8].map((n) => availability.safeParse(n).success)).toEqual([false, true, true, true, false]);
+  });
+});

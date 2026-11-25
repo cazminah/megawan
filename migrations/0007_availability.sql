@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `availability` integer DEFAULT 3 NOT NULL;

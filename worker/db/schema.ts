@@ -9,6 +9,8 @@ export const users = sqliteTable("users", {
   // set by hand in the D1 console — there's deliberately no way to become admin via the app
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
   palette: text("palette").notNull().default("default"), // colour mode: "default" | "colorblind"
+  // when they're around on the day — bitmask: AM 1 · PM 2 · evening 4 (3 = AM + PM)
+  availability: integer("availability").notNull().default(3),
   createdAt: integer("created_at").notNull(),
 });
 

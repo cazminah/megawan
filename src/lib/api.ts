@@ -20,12 +20,12 @@ async function call<T>(method: string, path: string, body?: unknown, raw?: Blob)
 
 export const api = {
   me: () => call<Me | null>("GET", "/me"),
-  register: (b: { username: string; password: string; email?: string; palette?: PaletteName }) => call<Me>("POST", "/auth/register", b),
+  register: (b: { username: string; password: string; email?: string; palette?: PaletteName; availability?: number }) => call<Me>("POST", "/auth/register", b),
   login: (b: { username: string; password: string }) => call<Me>("POST", "/auth/login", b),
   logout: () => call<{ ok: true }>("POST", "/auth/logout"),
   forgot: (username: string) => call<{ message: string }>("POST", "/auth/forgot", { username }),
   reset: (token: string, password: string) => call<Me>("POST", "/auth/reset", { token, password }),
-  updateMe: (b: { email?: string | null; avatar?: { kind: "icon"; icon: string; color: string }; palette?: PaletteName }) => call<Me>("PATCH", "/me", b),
+  updateMe: (b: { email?: string | null; avatar?: { kind: "icon"; icon: string; color: string }; palette?: PaletteName; availability?: number }) => call<Me>("PATCH", "/me", b),
   uploadAvatar: (img: Blob) => call<Me>("PUT", "/me/avatar", undefined, img),
   changePassword: (current: string, next: string) => call<{ ok: true }>("POST", "/me/password", { current, next }),
   search: (q: string) => call<SearchHit[]>("GET", `/games/search?q=${encodeURIComponent(q)}`),

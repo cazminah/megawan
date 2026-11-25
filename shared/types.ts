@@ -84,6 +84,29 @@ export interface PublicUser {
   id: string;
   username: string;
   avatar: Avatar;
+  availability: number; // bitmask, see AVAILABILITY
+}
+
+// when someone's around on the day. stored as a bitmask so any combination fits
+// in one number (AM + evening = 5). at least one is always set.
+export const AVAILABILITY = [
+  { bit: 1, label: "AM", icon: "sunrise" },
+  { bit: 2, label: "PM", icon: "sun" },
+  { bit: 4, label: "evening", icon: "moon" },
+] as const;
+export const ALL_AVAILABLE = 7;
+export const DEFAULT_AVAILABILITY = 3; // AM + PM
+export const isAvailability = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= ALL_AVAILABLE;
+
+/** "AM only", "AM–PM", "PM–evening", "AM + evening", "all day" … */
+export function availabilityText(mask: number) {
+  const on = AVAILABILITY.filter((a) => mask & a.bit).map((a) => a.label);
+  if (on.length === 3) return "all day";
+  if (on.length === 1) return `${on[0]} only`;
+  if (mask === 3) return "AM–PM";
+  if (mask === 6) return "PM–evening";
+  if (mask === 5) return "AM + evening";
+  return "not set";
 }
 
 export interface Me extends PublicUser {

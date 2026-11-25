@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hypeScore, INTEREST_LEVELS, LEVELS, PALETTE_NAMES, PALETTES, sortPlatforms, type InterestLevel } from "./types";
+import { availabilityText, hypeScore, INTEREST_LEVELS, isAvailability, LEVELS, PALETTE_NAMES, PALETTES, sortPlatforms, type InterestLevel } from "./types";
 
 const votes = (...ls: InterestLevel[]) => ls.map((level) => ({ level }));
 
@@ -69,5 +69,16 @@ describe("sortPlatforms", () => {
   it("puts the common platforms first, rarer ones after a–z", () => {
     expect(sortPlatforms(["Stadia", "Series X|S", "PS4", "PC", "PS5", "XONE", "Switch"])).toEqual(["PC", "PS5", "Switch", "Series X|S", "PS4", "XONE", "Stadia"]);
     expect(sortPlatforms(["WiiU", "Linux", "Vita", "Switch 2", "Mac"])).toEqual(["Switch 2", "Mac", "Linux", "Vita", "WiiU"]);
+  });
+});
+
+describe("availability", () => {
+  it("names every combination", () => {
+    expect([1, 2, 4, 3, 6, 5, 7].map(availabilityText)).toEqual([
+      "AM only", "PM only", "evening only", "AM–PM", "PM–evening", "AM + evening", "all day",
+    ]);
+  });
+  it("needs at least one slot, and nothing beyond the three", () => {
+    expect([0, 1, 7, 8, 2.5].map(isAvailability)).toEqual([false, true, true, false, false]);
   });
 });

@@ -1,7 +1,7 @@
 import { Hono, type Context, type MiddlewareHandler } from "hono";
 import type { Db } from "./db/client";
 import type { users } from "./db/schema";
-import { isPalette, type Avatar, type Me, type PublicUser } from "../shared/types";
+import { DEFAULT_AVAILABILITY, isAvailability, isPalette, type Avatar, type Me, type PublicUser } from "../shared/types";
 
 export type UserRow = typeof users.$inferSelect;
 
@@ -32,6 +32,7 @@ export const toPublic = (u: UserRow): PublicUser => ({
   id: u.id,
   username: u.username,
   avatar: parseAvatar(u.avatar),
+  availability: isAvailability(u.availability) ? u.availability : DEFAULT_AVAILABILITY,
 });
 
 export const toMe = (u: UserRow): Me => ({ ...toPublic(u), email: u.email, isAdmin: !!u.isAdmin, palette: isPalette(u.palette) ? u.palette : "default" });
