@@ -1,6 +1,6 @@
 # megaWAN
 
-pick the games. find your squad. touch no grass.
+pick the games. find your squad. get hyped.
 
 a little site for the megaWAN morale day: everyone adds the games they want to play, says how keen they are
 (eh, sure → i'm down → keen → hyped → LET'S GO) and, optionally, how long they're up for

@@ -48,7 +48,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
   .lbl{font-size:24px;font-weight:500;white-space:nowrap}
 </style></head><body>
   <h1>megaWAN</h1>
-  <p>pick the games. find your squad. touch no grass.</p>
+  <p>pick the games. find your squad. get hyped.</p>
   <div class="scale">${tiers}</div>
 </body></html>`;
 

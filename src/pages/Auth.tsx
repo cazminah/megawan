@@ -9,7 +9,7 @@ function Card({ title, children, footer }: { title: string; children: ReactNode;
     <div className="mx-auto mt-8 max-w-sm sm:mt-16">
       <div className="mb-6 text-center">
         <p className="hype-text font-display text-5xl font-bold tracking-tight">megaWAN</p>
-        <p className="mt-2 text-sm text-dim">pick the games. find your squad. touch no grass.</p>
+        <p className="mt-2 text-sm text-dim">pick the games. find your squad. get hyped.</p>
       </div>
       <div className="rounded-2xl border border-line bg-panel p-6 shadow-[0_20px_60px_-30px_var(--color-keen)]">
         <h1 className="mb-5 font-display text-xl font-bold">{title}</h1>
