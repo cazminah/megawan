@@ -57,6 +57,26 @@ export const interests = sqliteTable(
   (t) => [primaryKey({ columns: [t.userId, t.gameId] }), index("interests_game_idx").on(t.gameId)],
 );
 
+// past events: when an admin archives the arcade, every current vote moves here
+// under a season label (e.g. "2026"). people can bring games back from it.
+export const archivedInterests = sqliteTable(
+  "archived_interests",
+  {
+    season: text("season").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    gameId: integer("game_id")
+      .notNull()
+      .references(() => games.igdbId, { onDelete: "cascade" }),
+    level: integer("level").notNull(),
+    durationMin: integer("duration_min"),
+    durationMax: integer("duration_max"),
+    archivedAt: integer("archived_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.season, t.userId, t.gameId] }), index("archived_game_idx").on(t.gameId)],
+);
+
 // tiny key/value table — holds the cached IGDB access token
 export const kv = sqliteTable("kv", {
   key: text("key").primaryKey(),

@@ -1,4 +1,4 @@
-import type { AdminGame, AdminUser, ArcadeResponse, Duration, InterestLevel, Me, PaletteName, SearchHit } from "../../shared/types";
+import type { AdminGame, AdminSeason, AdminUser, ArcadeResponse, Duration, InterestLevel, Me, PaletteName, SearchHit } from "../../shared/types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
@@ -38,4 +38,7 @@ export const api = {
   adminResetAvatar: (userId: string) => call<{ ok: true }>("POST", `/admin/users/${encodeURIComponent(userId)}/reset-avatar`),
   adminDeleteUser: (userId: string) => call<{ ok: true }>("DELETE", `/admin/users/${encodeURIComponent(userId)}`),
   adminDeleteGame: (igdbId: number) => call<{ ok: true }>("DELETE", `/admin/games/${igdbId}`),
+  adminSeasons: () => call<AdminSeason[]>("GET", "/admin/seasons"),
+  adminArchive: (season: string) => call<{ ok: true; archived: number }>("POST", "/admin/archive", { season }),
+  adminRestoreSeason: (season: string) => call<{ ok: true }>("POST", `/admin/seasons/${encodeURIComponent(season)}/restore`),
 };

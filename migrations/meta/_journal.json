@@ -43,6 +43,13 @@
       "when": 1795567596197,
       "tag": "0005_palette_pref",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795567814450,
+      "tag": "0006_archive",
+      "breakpoints": true
     }
   ]
 }

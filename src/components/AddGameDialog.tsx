@@ -9,11 +9,13 @@ export function AddGameDialog({
   onClose,
   onSave,
   existing,
+  preset,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (hit: SearchHit, level: InterestLevel, duration: Duration | null | undefined) => Promise<void>;
   existing: Map<number, InterestLevel | null>; // games already in the arcade → my level there
+  preset?: SearchHit | null; // jump straight to the picker for this game (bringing one back from the archive)
 }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
@@ -27,9 +29,9 @@ export function AddGameDialog({
 
   useEffect(() => {
     if (!open) return;
-    setQ(""); setHits([]); setPicked(null); setLevel(null); setDuration(undefined); setError(null);
+    setQ(""); setHits([]); setPicked(preset ?? null); setLevel(preset ? 3 : null); setDuration(undefined); setError(null);
     setTimeout(() => input.current?.focus(), 0);
-  }, [open]);
+  }, [open, preset]);
 
   // debounced search, ignoring responses that arrive out of order
   useEffect(() => {
@@ -64,7 +66,7 @@ export function AddGameDialog({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={picked ? "how keen are you?" : "add a game"}>
+    <Modal open={open} onClose={onClose} title={preset ? "bring it back" : picked ? "how keen are you?" : "add a game"}>
       {!picked ? (
         <div className="space-y-3">
           <input
@@ -115,8 +117,8 @@ export function AddGameDialog({
           <InterestPicker value={level} onChange={setLevel} busy={saving} duration={duration ?? null} onDuration={setDuration} />
           <ErrorNote>{error}</ErrorNote>
           <div className="flex justify-between gap-2">
-            <Button variant="quiet" onClick={() => setPicked(null)}>← back</Button>
-            <Button onClick={save} disabled={!level || saving}>{saving ? "adding…" : "add to the arcade"}</Button>
+            {preset ? <span /> : <Button variant="quiet" onClick={() => setPicked(null)}>← back</Button>}
+            <Button onClick={save} disabled={!level || saving}>{saving ? "adding…" : preset ? "bring it back" : "add to the arcade"}</Button>
           </div>
         </div>
       )}

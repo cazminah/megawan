@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { AdminGame, AdminUser, Me } from "../../shared/types";
+import type { AdminGame, AdminSeason, AdminUser, Me } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
 import { Button, Cover, ErrorNote } from "../components/ui";
 import { api } from "../lib/api";
@@ -9,14 +9,17 @@ const day = (ms: number) => new Date(ms).toLocaleDateString(undefined, { day: "n
 export function Admin({ me }: { me: Me }) {
   const [people, setPeople] = useState<AdminUser[] | null>(null);
   const [games, setGames] = useState<AdminGame[] | null>(null);
+  const [seasons, setSeasons] = useState<AdminSeason[] | null>(null);
+  const [label, setLabel] = useState(String(new Date().getFullYear()));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [u, g] = await Promise.all([api.adminUsers(), api.adminGames()]);
+      const [u, g, s] = await Promise.all([api.adminUsers(), api.adminGames(), api.adminSeasons()]);
       setPeople(u);
       setGames(g);
+      setSeasons(s);
       setError(null);
     } catch (e) {
       setError((e as Error).message);
@@ -41,6 +44,53 @@ export function Admin({ me }: { me: Me }) {
         <p className="mt-1 text-sm text-dim">tidy up people and games. every button asks before it does anything.</p>
       </div>
       <ErrorNote>{error}</ErrorNote>
+
+      <section className="space-y-3 rounded-2xl border border-line bg-panel p-5">
+        <h2 className="font-display text-lg font-bold">after the event</h2>
+        <p className="text-sm text-dim">
+          archiving moves every current vote into a past season. the arcade starts fresh; past games show faded underneath and
+          anyone can bring one back (with their old vote, if they had one).
+        </p>
+        <form
+          className="flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = games?.filter((g) => g.votes).length ?? 0;
+            void act("archive", `archive the arcade as "${label.trim()}"? that's ${n} game${n === 1 ? "" : "s"} with votes — the arcade will start empty. (you can restore it below.)`, () => api.adminArchive(label.trim()));
+          }}
+        >
+          <label className="text-sm text-dim" htmlFor="season-label">season name</label>
+          <input
+            id="season-label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            maxLength={24}
+            required
+            className="w-32 rounded-xl border border-line bg-bg px-3 py-2 text-sm focus:border-keen focus:outline-none"
+          />
+          <Button type="submit" disabled={busy !== null || !label.trim()}>archive the arcade</Button>
+        </form>
+        {seasons && seasons.length > 0 && (
+          <ul className="divide-y divide-line/60 rounded-xl border border-line">
+            {seasons.map((s) => (
+              <li key={s.season} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <span>
+                  <span className="font-semibold">{s.season}</span>
+                  <span className="text-faint"> · {s.games} games · {s.votes} votes · archived {day(s.archivedAt)}</span>
+                </span>
+                <Button
+                  variant="ghost"
+                  className="px-2.5 py-1 text-xs"
+                  disabled={busy !== null}
+                  onClick={() => act(`r-${s.season}`, `put ${s.season}'s votes back into the arcade? votes people have made since stay as they are.`, () => api.adminRestoreSeason(s.season))}
+                >
+                  restore
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-bold">people <span className="text-sm font-normal text-faint">{people?.length ?? ""}</span></h2>

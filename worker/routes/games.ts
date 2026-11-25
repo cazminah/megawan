@@ -1,10 +1,39 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { DURATIONS, type ArcadeGame, type ArcadeResponse, type Game, type InterestLevel, type PublicUser } from "../../shared/types";
+import { DURATIONS, type ArcadeGame, type ArcadeResponse, type ArchivedSeason, type Game, type InterestLevel, type PublicUser } from "../../shared/types";
 import { limited, me, requireUser, router, toPublic } from "../app";
-import { games, interests, users } from "../db/schema";
+import { archivedInterests, games, interests, users } from "../db/schema";
 import { fetchGame, IgdbNotConfigured, SEARCH_VERSION, searchGames } from "../igdb/client";
 import type { Db } from "../db/client";
+
+/**
+ * past seasons for the arcade: each game appears once, under the latest season
+ * it was voted on in, and only while it has no votes this time round.
+ */
+function buildArchive(byGame: Map<number, ArcadeGame>, rows: (typeof archivedInterests.$inferSelect)[]): ArchivedSeason[] {
+  const seasonAt = new Map<string, number>();
+  const latest = new Map<number, string>(); // game → its most recent season
+  for (const r of rows) {
+    seasonAt.set(r.season, Math.max(seasonAt.get(r.season) ?? 0, r.archivedAt));
+  }
+  for (const r of rows) {
+    const cur = latest.get(r.gameId);
+    if (!cur || seasonAt.get(r.season)! > seasonAt.get(cur)!) latest.set(r.gameId, r.season);
+  }
+  const seasons = new Map<string, Map<number, ArcadeGame>>();
+  for (const r of rows) {
+    const game = byGame.get(r.gameId);
+    if (!game || game.interests.length || latest.get(r.gameId) !== r.season) continue;
+    if (!seasons.has(r.season)) seasons.set(r.season, new Map());
+    const gs = seasons.get(r.season)!;
+    if (!gs.has(r.gameId)) gs.set(r.gameId, { ...game, interests: [] });
+    const duration = r.durationMin !== null && r.durationMax !== null ? { min: r.durationMin, max: r.durationMax } : null;
+    gs.get(r.gameId)!.interests.push({ userId: r.userId, level: r.level as InterestLevel, duration, updatedAt: r.archivedAt });
+  }
+  return [...seasons.entries()]
+    .map(([season, gs]) => ({ season, archivedAt: seasonAt.get(season)!, games: [...gs.values()] }))
+    .sort((a, b) => b.archivedAt - a.archivedAt);
+}
 
 const durationIndex = z.number().int().min(0).max(DURATIONS.length - 1);
 export const interestBody = z.object({
@@ -73,10 +102,11 @@ export const gameRoutes = router()
   // the whole arcade in one go: every game anyone rated, who rated it, how much
   .get("/arcade", async (c) => {
     const db = c.get("db");
-    const [gameRows, interestRows, userRows] = await Promise.all([
+    const [gameRows, interestRows, userRows, archivedRows] = await Promise.all([
       db.select().from(games).all(),
       db.select().from(interests).all(),
       db.select().from(users).all(),
+      db.select().from(archivedInterests).all(),
     ]);
     const byGame = new Map<number, ArcadeGame>();
     const outdated: number[] = [];
@@ -92,7 +122,8 @@ export const gameRoutes = router()
     }
     const people: Record<string, PublicUser> = {};
     for (const u of userRows) people[u.id] = toPublic(u);
-    const body: ArcadeResponse = { games: [...byGame.values()].filter((g) => g.interests.length), users: people };
+    const current = [...byGame.values()].filter((g) => g.interests.length);
+    const body: ArcadeResponse = { games: current, users: people, archive: buildArchive(byGame, archivedRows) };
     return c.json(body);
   })
 

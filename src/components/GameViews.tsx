@@ -16,6 +16,27 @@ export interface ViewProps {
   onOpen: (g: ArcadeGame) => void;
   /** a picker opened/closed — the arcade freezes its order while one is open */
   onEditing?: (igdbId: number, open: boolean) => void;
+  /** archive mode: faded cards from a past season; clicking one brings it back */
+  archived?: boolean;
+  onRevive?: (g: ArcadeGame) => void;
+}
+
+/** the button on archived cards: shows your vote from last time, if you had one */
+function ReviveButton({ game, myId, onRevive }: { game: ArcadeGame; myId: string; onRevive?: (g: ArcadeGame) => void }) {
+  const old = game.interests.find((i) => i.userId === myId)?.level;
+  const lv = old ? INTEREST_LEVELS[old] : null;
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onRevive?.(game); }}
+      title={lv ? `bring it back — you were "${lv.label}" last time` : "bring it back — pick how keen you are"}
+      aria-label={lv ? `bring ${game.name} back as ${lv.label}` : `bring ${game.name} back`}
+      className="inline-flex h-9 items-center gap-1 rounded-full border-2 border-line bg-panel-2 px-2.5 text-xs font-semibold text-dim transition hover:scale-105 hover:border-keen hover:text-ink"
+    >
+      <span aria-hidden="true">↺</span>
+      {lv ? <TierIcon name={lv.icon} color={lv.color} size={16} /> : "back"}
+    </button>
+  );
 }
 
 const peopleOf = (g: ArcadeGame, users: Record<string, PublicUser>) =>
@@ -154,7 +175,8 @@ function RateButton({ game, myId, onSet, onEditing }: { game: ArcadeGame; myId: 
   );
 }
 
-export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewProps) {
+export function GameGrid({ games, users, myId, onSet, onOpen, onEditing, archived, onRevive }: ViewProps) {
+  const open = (g: ArcadeGame) => (archived ? onRevive?.(g) : onOpen(g));
   return (
     <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {games.map((g) => {
@@ -164,9 +186,12 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewP
           <li key={g.igdbId} data-flip={g.igdbId}>
             {/* the whole card is a square: wide image on top, details underneath */}
             <article
-              onClick={() => onOpen(g)}
-              className="group flex aspect-square cursor-pointer flex-col overflow-hidden rounded-2xl border border-line bg-panel transition hover:-translate-y-0.5 hover:border-keen/60"
-              style={{ boxShadow: `0 10px 30px -18px ${INTEREST_LEVELS[top].color}` }}
+              onClick={() => open(g)}
+              title={archived ? "bring it back" : undefined}
+              className={`group flex aspect-square cursor-pointer flex-col overflow-hidden rounded-2xl border border-line bg-panel transition hover:-translate-y-0.5 hover:border-keen/60 ${
+                archived ? "opacity-50 grayscale-[70%] hover:opacity-100 hover:grayscale-0" : ""
+              }`}
+              style={archived ? undefined : { boxShadow: `0 10px 30px -18px ${INTEREST_LEVELS[top].color}` }}
             >
               <div className="relative min-h-0 flex-1 overflow-hidden">
                 <HeroImage game={g} className="h-full w-full transition group-hover:scale-[1.03]" />
@@ -174,13 +199,13 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewP
               <div className="flex shrink-0 flex-col gap-2 p-3">
                 <div className="min-w-0">
                   <h3 className="truncate font-display font-bold leading-tight">
-                    <button className="max-w-full truncate text-left" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>{g.name}</button>
+                    <button className="max-w-full truncate text-left" onClick={(e) => { e.stopPropagation(); open(g); }}>{g.name}</button>
                   </h3>
                   <MetaRow game={g} platforms={plats} />
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <AvatarStack people={peopleOf(g, users)} max={5} size={26} />
-                  <RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} />
+                  {archived ? <ReviveButton game={g} myId={myId} onRevive={onRevive} /> : <RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} />}
                 </div>
               </div>
             </article>
@@ -191,7 +216,8 @@ export function GameGrid({ games, users, myId, onSet, onOpen, onEditing }: ViewP
   );
 }
 
-export function GameTable({ games, users, myId, onSet, onOpen, onEditing }: ViewProps) {
+export function GameTable({ games, users, myId, onSet, onOpen, onEditing, archived, onRevive }: ViewProps) {
+  const open = (g: ArcadeGame) => (archived ? onRevive?.(g) : onOpen(g));
   return (
     <div className="overflow-x-auto rounded-2xl border border-line bg-panel">
       <table className="w-full min-w-[760px] text-left text-sm">
@@ -208,11 +234,17 @@ export function GameTable({ games, users, myId, onSet, onOpen, onEditing }: View
         </thead>
         <tbody>
           {games.map((g) => (
-            <tr key={g.igdbId} data-flip={g.igdbId} onClick={() => onOpen(g)} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-panel-2/60">
+            <tr
+              key={g.igdbId}
+              data-flip={g.igdbId}
+              onClick={() => open(g)}
+              title={archived ? "bring it back" : undefined}
+              className={`cursor-pointer border-b border-line/60 last:border-0 hover:bg-panel-2/60 ${archived ? "opacity-50 grayscale-[70%] hover:opacity-100 hover:grayscale-0" : ""}`}
+            >
               <td className="px-3 py-2">
                 <div className="flex items-center gap-3">
                   <Cover imageId={g.coverImageId} name="" className="h-12 w-9 shrink-0 rounded-md" />
-                  <button className="text-left font-display font-semibold leading-tight" onClick={(e) => { e.stopPropagation(); onOpen(g); }}>
+                  <button className="text-left font-display font-semibold leading-tight" onClick={(e) => { e.stopPropagation(); open(g); }}>
                     {g.name}
                   </button>
                 </div>
@@ -222,7 +254,7 @@ export function GameTable({ games, users, myId, onSet, onOpen, onEditing }: View
               <td className="whitespace-nowrap px-3 py-2 text-dim"><Players game={g} /></td>
               <td className="max-w-40 px-3 py-2 text-dim">{g.genres.slice(0, 3).map(shortGenre).join(", ") || "—"}</td>
               <td className="px-3 py-2"><AvatarStack people={peopleOf(g, users)} max={6} size={26} /></td>
-              <td className="px-3 py-2"><RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} /></td>
+              <td className="px-3 py-2">{archived ? <ReviveButton game={g} myId={myId} onRevive={onRevive} /> : <RateButton game={g} myId={myId} onSet={onSet} onEditing={onEditing} />}</td>
             </tr>
           ))}
         </tbody>

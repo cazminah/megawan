@@ -65,6 +65,7 @@ export function Arcade({ me }: { me: Me }) {
   }));
   const [showFilters, setShowFilters] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [reviving, setReviving] = useState<ArcadeGame | null>(null);
   const [openId, setOpenId] = useState<number | null>(null);
 
   useEffect(() => remember("mw:view", view), [view]);
@@ -148,7 +149,24 @@ export function Arcade({ me }: { me: Me }) {
   const nActive = activeFilterCount(filters);
   const clearFilters = () => setFilters((f) => ({ ...DEFAULT_FILTERS, text: f.text, sort: f.sort, groupBy: f.groupBy }));
 
-  const onAdd = (hit: SearchHit, level: InterestLevel, duration: Duration | null | undefined) => setInterest(hit.igdbId, { level, duration }, hit);
+  const onAdd = (hit: SearchHit, level: InterestLevel, duration: Duration | null | undefined) =>
+    setInterest(hit.igdbId, { level, duration }, reviving ?? hit);
+
+  // past seasons, with the same search/filters/sort applied (no grouping)
+  const archive = useMemo(
+    () => (data?.archive ?? []).map((s) => ({ ...s, games: applyFilters(s.games, filters, me.id) })).filter((s) => s.games.length),
+    [data, filters, me.id],
+  );
+  // bring a game back: straight back with your old vote if you had one, otherwise pick a level
+  const onRevive = (g: ArcadeGame) => {
+    const old = g.interests.find((i) => i.userId === me.id);
+    if (old) {
+      setTouched(g.igdbId);
+      void setInterest(g.igdbId, { level: old.level, duration: old.duration }, g);
+    } else {
+      setReviving(g);
+    }
+  };
   const viewProps = { users, myId: me.id, onSet: setInterest, onEditing, onOpen: (g: ArcadeGame) => setOpenId(g.igdbId) };
 
   return (
@@ -338,9 +356,29 @@ export function Arcade({ me }: { me: Me }) {
             ))}
           </div>
         )}
+
+        {archive.map((season) => (
+          <section key={season.season} aria-label={`from ${season.season}`} className="mt-12">
+            <div className="mb-1 flex items-center gap-3 text-faint">
+              <span className="h-px flex-1 bg-line" />
+              <span className="font-display text-sm font-bold uppercase tracking-widest">{season.season}</span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+            <p className="mb-4 text-center text-xs text-faint">from a past megaWAN · tap one to bring it back{" "}(with your vote from last time, if you had one)</p>
+            {view === "grid"
+              ? <GameGrid games={season.games} {...viewProps} archived onRevive={onRevive} />
+              : <GameTable games={season.games} {...viewProps} archived onRevive={onRevive} />}
+          </section>
+        ))}
       </div>
 
-      <AddGameDialog open={adding} onClose={() => setAdding(false)} onSave={onAdd} existing={existing} />
+      <AddGameDialog
+        open={adding || !!reviving}
+        onClose={() => { setAdding(false); setReviving(null); }}
+        onSave={onAdd}
+        existing={existing}
+        preset={reviving ? { igdbId: reviving.igdbId, name: reviving.name, coverImageId: reviving.coverImageId, releaseYear: reviving.releaseYear, platforms: reviving.platforms } : null}
+      />
       <Modal open={!!open} onClose={() => setOpenId(null)} title={open?.name ?? ""} wide>
         {open && data && <GameDetail game={open} users={data.users} myId={me.id} />}
       </Modal>

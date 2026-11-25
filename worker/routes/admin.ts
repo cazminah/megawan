@@ -1,14 +1,15 @@
 // admin tools: tidy up people and games. admins are set by hand in the D1
 // console (`UPDATE users SET is_admin = 1 WHERE username = '…'`), see DEPLOY.md.
 
-import { count, eq } from "drizzle-orm";
+import { count, desc, eq, max, sql } from "drizzle-orm";
 import { z } from "zod";
-import { randomAvatar, type AdminGame, type AdminUser, type Game } from "../../shared/types";
+import { randomAvatar, type AdminGame, type AdminSeason, type AdminUser, type Game } from "../../shared/types";
 import { me, parseAvatar, requireAdmin, requireUser, router, toPublic } from "../app";
-import { games, interests, resetTokens, sessions, users } from "../db/schema";
+import { archivedInterests, games, interests, resetTokens, sessions, users } from "../db/schema";
 
 const id = z.string().uuid();
 const gameId = z.coerce.number().int().positive();
+const season = z.string().trim().min(1).max(24);
 
 async function dropUpload(env: Env, avatar: string) {
   const a = parseAvatar(avatar);
@@ -54,6 +55,7 @@ export const adminRoutes = router()
     await dropUpload(c.env, user.avatar);
     await db.batch([
       db.delete(interests).where(eq(interests.userId, user.id)),
+      db.delete(archivedInterests).where(eq(archivedInterests.userId, user.id)),
       db.delete(sessions).where(eq(sessions.userId, user.id)),
       db.delete(resetTokens).where(eq(resetTokens.userId, user.id)),
       db.delete(users).where(eq(users.id, user.id)),
@@ -82,6 +84,65 @@ export const adminRoutes = router()
     const gid = gameId.safeParse(c.req.param("id"));
     if (!gid.success) return c.json({ error: "bad game id" }, 400);
     const db = c.get("db");
-    await db.batch([db.delete(interests).where(eq(interests.gameId, gid.data)), db.delete(games).where(eq(games.igdbId, gid.data))]);
+    await db.batch([
+      db.delete(interests).where(eq(interests.gameId, gid.data)),
+      db.delete(archivedInterests).where(eq(archivedInterests.gameId, gid.data)),
+      db.delete(games).where(eq(games.igdbId, gid.data)),
+    ]);
+    return c.json({ ok: true });
+  })
+
+  // ---- seasons (archiving the arcade after an event) ----
+
+  .get("/seasons", async (c) => {
+    const rows = await c
+      .get("db")
+      .select({
+        season: archivedInterests.season,
+        archivedAt: max(archivedInterests.archivedAt),
+        games: sql<number>`count(distinct ${archivedInterests.gameId})`,
+        votes: count(),
+      })
+      .from(archivedInterests)
+      .groupBy(archivedInterests.season)
+      .orderBy(desc(max(archivedInterests.archivedAt)))
+      .all();
+    const out: AdminSeason[] = rows.map((r) => ({ season: r.season, archivedAt: r.archivedAt ?? 0, games: r.games, votes: r.votes }));
+    return c.json(out);
+  })
+
+  // move every current vote into a season — the arcade starts fresh
+  .post("/archive", async (c) => {
+    const parsed = season.safeParse((await c.req.json().catch(() => null))?.season);
+    if (!parsed.success) return c.json({ error: "give the season a short name, like 2026" }, 400);
+    const db = c.get("db");
+    const current = await db.select({ n: count() }).from(interests).get();
+    if (!current?.n) return c.json({ error: "there are no votes to archive" }, 400);
+    const now = Date.now();
+    await c.env.DB.batch([
+      c.env.DB.prepare(
+        `INSERT INTO archived_interests (season, user_id, game_id, level, duration_min, duration_max, archived_at)
+         SELECT ?1, user_id, game_id, level, duration_min, duration_max, ?2 FROM interests WHERE true
+         ON CONFLICT (season, user_id, game_id) DO UPDATE SET
+           level = excluded.level, duration_min = excluded.duration_min,
+           duration_max = excluded.duration_max, archived_at = excluded.archived_at`,
+      ).bind(parsed.data, now),
+      c.env.DB.prepare(`DELETE FROM interests`),
+    ]);
+    return c.json({ ok: true, archived: current.n });
+  })
+
+  // undo an archive: put a season's votes back (current votes win if both exist)
+  .post("/seasons/:season/restore", async (c) => {
+    const parsed = season.safeParse(c.req.param("season"));
+    if (!parsed.success) return c.json({ error: "bad season" }, 400);
+    await c.env.DB.batch([
+      c.env.DB.prepare(
+        `INSERT INTO interests (user_id, game_id, level, duration_min, duration_max, updated_at)
+         SELECT user_id, game_id, level, duration_min, duration_max, archived_at FROM archived_interests WHERE season = ?1
+         ON CONFLICT (user_id, game_id) DO NOTHING`,
+      ).bind(parsed.data),
+      c.env.DB.prepare(`DELETE FROM archived_interests WHERE season = ?1`).bind(parsed.data),
+    ]);
     return c.json({ ok: true });
   });

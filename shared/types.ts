@@ -146,9 +146,24 @@ export interface ArcadeGame extends Game {
   interests: ArcadeInterest[];
 }
 
+export interface ArchivedSeason {
+  season: string; // e.g. "2026"
+  archivedAt: number;
+  games: ArcadeGame[]; // interests here are the votes from that season
+}
+
 export interface ArcadeResponse {
   games: ArcadeGame[];
   users: Record<string, PublicUser>;
+  /** past seasons, newest first. a game shows once (its latest season), and only while nobody's voted on it this time */
+  archive: ArchivedSeason[];
+}
+
+export interface AdminSeason {
+  season: string;
+  archivedAt: number;
+  games: number;
+  votes: number;
 }
 
 export function coverUrl(imageId: string | null, size: "cover_big" | "cover_small" | "thumb" | "720p" = "cover_big") {
