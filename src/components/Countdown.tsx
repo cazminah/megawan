@@ -20,7 +20,7 @@ export function Countdown({ compact = false }: { compact?: boolean }) {
       <p title={title} className="text-center font-display text-base font-bold tracking-tight">
         <span className="hype-text">{date.replace(/ \d{4}$/, "")}</span>
         <span aria-hidden="true" className="mx-2 text-line">‖</span>
-        <span className="hype-text">{c.short}</span>
+        <span className="hype-text-rev">{c.short}</span>
       </p>
     );
   }
@@ -28,7 +28,7 @@ export function Countdown({ compact = false }: { compact?: boolean }) {
     <p title={title} className="flex items-center gap-3 whitespace-nowrap font-display text-lg font-bold tracking-tight lg:text-2xl">
       <span className="hype-text">{date}</span>
       <span aria-hidden="true" className="font-normal text-line">‖</span>
-      <span className="hype-text">{c.text}</span>
+      <span className="hype-text-rev">{c.text}</span>
     </p>
   );
 }

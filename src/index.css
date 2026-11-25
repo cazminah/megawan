@@ -27,6 +27,12 @@ body { font-family: var(--font-sans); min-height: 100dvh; }
   background-image: linear-gradient(90deg, var(--color-maybe), var(--color-keen), var(--color-perish));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+/* the same gradient mirrored (pink → blue) — the header countdown uses it so it
+   reflects the date beside it */
+.hype-text-rev {
+  background-image: linear-gradient(90deg, var(--color-perish), var(--color-keen), var(--color-maybe));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 
 /* icon avatars: the svg is a stencil, the colour shows through it */
 .icon-mask {
