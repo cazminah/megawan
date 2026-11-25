@@ -1,6 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
-import { USERNAME_RE, randomAvatar } from "../../shared/types";
+import { PALETTE_NAMES, USERNAME_RE, randomAvatar } from "../../shared/types";
 import { clientIp, limited, router, toMe } from "../app";
 import { resetTokens, sessions, users } from "../db/schema";
 import { dummyHash, hashPassword, verifyPassword } from "../auth/hash";
@@ -37,10 +37,10 @@ export const auth = router()
   .post("/register", async (c) => {
     const over = await limited(c.env.AUTH_LIMIT, `register:${clientIp(c)}`);
     if (over) return over;
-    const parsed = z.object({ username, password, email }).safeParse(await c.req.json().catch(() => null));
+    const parsed = z.object({ username, password, email, palette: z.enum(PALETTE_NAMES).optional() }).safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: firstError(parsed.error) }, 400);
     const db = c.get("db");
-    const { username: name, password: pw, email: mail } = parsed.data;
+    const { username: name, password: pw, email: mail, palette } = parsed.data;
 
     const taken = await db.select({ id: users.id }).from(users).where(eq(users.username, name)).get();
     if (taken) return c.json({ error: "that username's taken" }, 409);
@@ -52,6 +52,7 @@ export const auth = router()
       passwordHash: await hashPassword(pw),
       avatar: JSON.stringify(randomAvatar()),
       isAdmin: false,
+      palette: palette ?? "default",
       createdAt: Date.now(),
     };
     try {

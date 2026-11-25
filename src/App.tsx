@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Me } from "../shared/types";
 import { Avatar } from "./components/Avatar";
 import { api } from "./lib/api";
+import { applyPalette, currentPalette } from "./lib/palette";
 import { linkTo, navigate, usePath } from "./lib/router";
 import { Arcade } from "./pages/Arcade";
 import { Forgot, Login, Register, Reset } from "./pages/Auth";
@@ -46,6 +47,11 @@ export function App() {
   useEffect(() => {
     api.me().then(setMe).catch(() => setMe(null));
   }, []);
+
+  // your account's colour mode wins once you're logged in (it follows you between devices)
+  useEffect(() => {
+    if (me && me.palette !== currentPalette()) applyPalette(me.palette);
+  }, [me]);
 
   // bounce between public + private pages depending on login state
   useEffect(() => {

@@ -6,7 +6,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { INTEREST_LEVELS, LEVELS } from "../shared/types";
+import { INTEREST_LEVELS, LEVELS, PALETTES } from "../shared/types";
 import { PATHS } from "../src/lib/iconPaths";
 
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -24,14 +24,14 @@ const icon = (d: string, color: string, size: number) =>
   `<svg viewBox="0 -960 960 960" width="${size}" height="${size}"><path d="${d}" fill="${color}"/></svg>`;
 
 const tiers = LEVELS.map((l) => {
-  const t = INTEREST_LEVELS[l];
+  const t = { ...INTEREST_LEVELS[l], ...PALETTES.default[l - 1]! }; // the image needs real hex, not css vars
   const on = l === 5;
   return `<div class="tier">
     <div class="ring" style="border-color:${t.color};${on ? `background:${t.color};box-shadow:0 0 40px ${t.color}aa;` : ""}">${icon(PATHS[t.icon], on ? "#0b1020" : t.color, 44)}</div>
     <div class="lbl" style="color:${t.text}">${t.label}</div>
   </div>`;
 }).join("");
-const track = LEVELS.map((l) => INTEREST_LEVELS[l].color).join(",");
+const track = PALETTES.default.map((p) => p.color).join(",");
 
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Inter:wght@500&display=block" rel="stylesheet">

@@ -1,4 +1,4 @@
-import { DURATIONS, INTEREST_LEVELS, LEVELS, durationLabel, type Duration, type InterestLevel } from "../../shared/types";
+import { DURATIONS, INTEREST_LEVELS, LEVELS, alpha, durationLabel, type Duration, type InterestLevel } from "../../shared/types";
 import { TierIcon } from "./TierIcon";
 
 const TRACK = `linear-gradient(90deg, ${LEVELS.map((l) => INTEREST_LEVELS[l].color).join(", ")})`;
@@ -61,9 +61,9 @@ export function InterestPicker({
               <span
                 className="grid h-10 w-10 place-items-center rounded-full border-2 transition group-hover:scale-110 group-focus-visible:ring-2 group-focus-visible:ring-white/60"
                 style={{
-                  borderColor: on ? lv.color : `${lv.color}88`,
+                  borderColor: on ? lv.color : alpha(lv.color, 55),
                   background: on ? lv.color : "var(--color-bg)",
-                  boxShadow: on ? `0 0 ${l === 5 ? 22 : 12}px ${lv.color}aa` : "none",
+                  boxShadow: on ? `0 0 ${l === 5 ? 22 : 12}px ${alpha(lv.color, 65)}` : "none",
                   transform: on ? "scale(1.12)" : undefined,
                 }}
               >
@@ -138,7 +138,7 @@ function DurationSection({
             aria-pressed={on(i)}
             onClick={() => tap(i)}
             className="flex items-center justify-center gap-1.5 px-1.5 py-2 text-xs font-semibold transition"
-            style={{ background: on(i) ? `${accent}2e` : undefined, color: on(i) ? "var(--color-ink)" : "var(--color-faint)" }}
+            style={{ background: on(i) ? alpha(accent, 18) : undefined, color: on(i) ? "var(--color-ink)" : "var(--color-faint)" }}
           >
             <TierIcon name={d.icon} color={on(i) ? accent : "currentColor"} size={18} />
             <span className="whitespace-nowrap">

@@ -8,6 +8,7 @@ export const users = sqliteTable("users", {
   avatar: text("avatar").notNull(), // json Avatar
   // set by hand in the D1 console — there's deliberately no way to become admin via the app
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
+  palette: text("palette").notNull().default("default"), // colour mode: "default" | "colorblind"
   createdAt: integer("created_at").notNull(),
 });
 

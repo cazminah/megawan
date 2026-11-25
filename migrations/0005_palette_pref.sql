@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `palette` text DEFAULT 'default' NOT NULL;

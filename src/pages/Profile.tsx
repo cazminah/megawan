@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { DEFAULT_ICONS, ICON_COLORS, type Avatar as AvatarT, type Me } from "../../shared/types";
+import { DEFAULT_ICONS, ICON_COLORS, type Avatar as AvatarT, type Me, type PaletteName } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
 import { Button, ErrorNote, Field } from "../components/ui";
 import { api } from "../lib/api";
 import { iconLabel, loadIconIndex, searchIcons } from "../lib/icons";
 import { navigate } from "../lib/router";
+import { ColourModeToggle } from "../components/ColourMode";
 
 const MAX_UPLOAD = 8 * 1024 * 1024; // before we shrink it — the server caps the shrunk one at 2 MB
 
@@ -195,6 +196,21 @@ function PasswordForm() {
   );
 }
 
+function ColourModeSection({ onSaved }: { onSaved: (m: Me) => void }) {
+  const [error, setError] = useState<string | null>(null);
+  const save = async (palette: PaletteName) => {
+    setError(null);
+    try { onSaved(await api.updateMe({ palette })); } catch (e) { setError((e as Error).message); }
+  };
+  return (
+    <section className="space-y-3 rounded-2xl border border-line bg-panel p-5">
+      <h2 className="font-display text-lg font-bold">colours</h2>
+      <ColourModeToggle onChange={save} />
+      <ErrorNote>{error}</ErrorNote>
+    </section>
+  );
+}
+
 function ArcadeButton() {
   return (
     <Button onClick={() => navigate("/")} className="px-6 py-3 text-base">
@@ -221,6 +237,7 @@ export function Profile({ me, onSaved }: { me: Me; onSaved: (m: Me) => void }) {
         <div className="flex justify-center pt-2 pb-4"><ArcadeButton /></div>
       ) : (
         <>
+          <ColourModeSection onSaved={onSaved} />
           <EmailForm me={me} onSaved={onSaved} />
           <PasswordForm />
         </>

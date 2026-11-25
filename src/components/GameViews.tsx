@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { INTEREST_LEVELS, LEVELS, durationLabel, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
+import { INTEREST_LEVELS, LEVELS, alpha, durationLabel, type ArcadeGame, type ArcadeInterest, type Duration, type InterestLevel, type PublicUser } from "../../shared/types";
 import type { InterestPatch, SetInterest } from "../lib/arcade";
 import { playersLong, playersShort, primaryGenre, shortGenre } from "../lib/format";
 import { Avatar, AvatarStack } from "./Avatar";
@@ -123,7 +123,7 @@ function RateButton({ game, myId, onSet, onEditing }: { game: ArcadeGame; myId: 
         aria-expanded={open}
         aria-label={mine ? `your interest: ${INTEREST_LEVELS[mine].label} — change` : "say how keen you are"}
         className="grid h-9 w-9 place-items-center rounded-full border-2 text-lg font-bold transition hover:scale-110"
-        style={{ borderColor: color ?? "var(--color-line)", background: color ? `${color}26` : "var(--color-panel-2)", color: "var(--color-dim)" }}
+        style={{ borderColor: color ?? "var(--color-line)", background: color ? alpha(color, 15) : "var(--color-panel-2)", color: "var(--color-dim)" }}
       >
         {mine ? <TierIcon name={INTEREST_LEVELS[mine].icon} color={color!} size={20} /> : "+"}
       </button>

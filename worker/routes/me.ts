@@ -1,6 +1,6 @@
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
-import { ICON_COLORS, ICON_NAME_RE, type Avatar } from "../../shared/types";
+import { ICON_COLORS, ICON_NAME_RE, PALETTE_NAMES, type Avatar } from "../../shared/types";
 import { me, parseAvatar, requireUser, router, toMe } from "../app";
 import { sessions, users } from "../db/schema";
 import { hashPassword, verifyPassword } from "../auth/hash";
@@ -25,12 +25,13 @@ export const meRoutes = router()
 
   .patch("/", async (c) => {
     const parsed = z
-      .object({ email, avatar: iconAvatar.optional() })
+      .object({ email, avatar: iconAvatar.optional(), palette: z.enum(PALETTE_NAMES).optional() })
       .safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "invalid input" }, 400);
     const user = me(c);
     const patch: Partial<typeof users.$inferInsert> = {};
     if (parsed.data.email !== undefined) patch.email = parsed.data.email;
+    if (parsed.data.palette) patch.palette = parsed.data.palette;
     if (parsed.data.avatar) {
       // icon files are static assets; make sure the one asked for actually exists.
       // (a missing file still comes back 200 — the SPA fallback serves index.html —

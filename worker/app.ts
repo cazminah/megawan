@@ -1,7 +1,7 @@
 import { Hono, type Context, type MiddlewareHandler } from "hono";
 import type { Db } from "./db/client";
 import type { users } from "./db/schema";
-import type { Avatar, Me, PublicUser } from "../shared/types";
+import { isPalette, type Avatar, type Me, type PublicUser } from "../shared/types";
 
 export type UserRow = typeof users.$inferSelect;
 
@@ -34,7 +34,7 @@ export const toPublic = (u: UserRow): PublicUser => ({
   avatar: parseAvatar(u.avatar),
 });
 
-export const toMe = (u: UserRow): Me => ({ ...toPublic(u), email: u.email, isAdmin: !!u.isAdmin });
+export const toMe = (u: UserRow): Me => ({ ...toPublic(u), email: u.email, isAdmin: !!u.isAdmin, palette: isPalette(u.palette) ? u.palette : "default" });
 
 /** rate-limit by key; returns a 429 response if over, else null */
 export async function limited(limiter: RateLimit, key: string) {

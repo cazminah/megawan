@@ -3,6 +3,8 @@ import type { Me } from "../../shared/types";
 import { Button, ErrorNote, Field } from "../components/ui";
 import { api } from "../lib/api";
 import { linkTo, navigate } from "../lib/router";
+import { currentPalette } from "../lib/palette";
+import { ColourModeToggle } from "../components/ColourMode";
 
 function Card({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
@@ -58,7 +60,7 @@ export function Register({ onAuthed }: { onAuthed: (m: Me) => void }) {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const { error, busy, submit } = useSubmit(
-    () => api.register({ username, password, email: email || undefined }),
+    () => api.register({ username, password, email: email || undefined, palette: currentPalette() }),
     (m) => { onAuthed(m); navigate("/profile?welcome=1", true); },
   );
   return (
@@ -83,6 +85,9 @@ export function Register({ onAuthed }: { onAuthed: (m: Me) => void }) {
           onChange={(e) => setEmail(e.target.value)}
           hint="only used to reset your passphrase if you forget it"
         />
+        <div className="rounded-xl border border-line bg-panel-2/40 p-3">
+          <ColourModeToggle compact />
+        </div>
         <ErrorNote>{error}</ErrorNote>
         <Button type="submit" disabled={busy} className="w-full">{busy ? "creating…" : "let's go"}</Button>
       </form>

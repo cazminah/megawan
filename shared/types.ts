@@ -3,20 +3,48 @@
 export type InterestLevel = 1 | 2 | 3 | 4 | 5;
 export const LEVELS: InterestLevel[] = [1, 2, 3, 4, 5]; // least → most keen
 
-// an OKLCH ramp: lightness climbs 52% → 92% while the hue goes blue → purple →
-// pink → coral → yellow, so brightness alone tells you how keen. `text` is the
-// colour for words — tier 1's blue is too dim for text (3.1:1), so it uses the
-// normal dim text colour instead.
+// tier colours, one palette per colour mode. both are OKLCH ramps where
+// lightness climbs with keenness, so brightness alone tells you how keen.
+//   default:    blue → purple → pink → coral → yellow
+//   colorblind: blue → sky → amber → yellow — stays on the blue–yellow axis that
+//               protan/deutan vision keeps; adjacent tiers stay distinct under
+//               protanopia, deuteranopia and tritanopia simulations (see shared/types.test.ts)
+// tier 1's text uses the normal dim text colour — its blue is too dim for words.
+export type PaletteName = "default" | "colorblind";
+export const PALETTE_NAMES: PaletteName[] = ["default", "colorblind"];
+export const PALETTES: Record<PaletteName, { color: string; text: string }[]> = {
+  default: [
+    { color: "#4c689d", text: "#9aa3d6" },
+    { color: "#816dd2", text: "#816dd2" },
+    { color: "#dc5dd4", text: "#dc5dd4" },
+    { color: "#ff7b74", text: "#ff7b74" },
+    { color: "#ffde79", text: "#ffde79" },
+  ],
+  colorblind: [
+    { color: "#46669f", text: "#9aa3d6" },
+    { color: "#3e89d7", text: "#5c9ce0" },
+    { color: "#50b9df", text: "#50b9df" },
+    { color: "#ffb147", text: "#ffb147" },
+    { color: "#ffec6b", text: "#ffec6b" },
+  ],
+};
+export const isPalette = (p: unknown): p is PaletteName => PALETTE_NAMES.includes(p as PaletteName);
+
+// components use these css variables (set from PALETTES by the app), so switching
+// colour mode re-colours everything without re-rendering
 export const INTEREST_LEVELS: Record<
   InterestLevel,
   { label: string; color: string; text: string; icon: InterestIconName; weight: number }
 > = {
-  1: { label: "eh, sure", color: "#4c689d", text: "#9aa3d6", icon: "neutral", weight: 1 },
-  2: { label: "i'm down", color: "#816dd2", text: "#816dd2", icon: "thumb", weight: 2 },
-  3: { label: "keen", color: "#dc5dd4", text: "#dc5dd4", icon: "heart", weight: 3 },
-  4: { label: "hyped", color: "#ff7b74", text: "#ff7b74", icon: "fire", weight: 5 },
-  5: { label: "LET'S GO", color: "#ffde79", text: "#ffde79", icon: "rocket", weight: 8 },
+  1: { label: "eh, sure", color: "var(--tier-1)", text: "var(--tier-1-text)", icon: "neutral", weight: 1 },
+  2: { label: "i'm down", color: "var(--tier-2)", text: "var(--tier-2-text)", icon: "thumb", weight: 2 },
+  3: { label: "keen", color: "var(--tier-3)", text: "var(--tier-3-text)", icon: "heart", weight: 3 },
+  4: { label: "hyped", color: "var(--tier-4)", text: "var(--tier-4-text)", icon: "fire", weight: 5 },
+  5: { label: "LET'S GO", color: "var(--tier-5)", text: "var(--tier-5-text)", icon: "rocket", weight: 8 },
 };
+
+/** a colour (hex or css var) at some opacity, e.g. alpha(INTEREST_LEVELS[3].color, 15) */
+export const alpha = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export type InterestIconName = "neutral" | "thumb" | "heart" | "fire" | "rocket" | "skull";
 
@@ -59,6 +87,7 @@ export interface PublicUser {
 export interface Me extends PublicUser {
   email: string | null;
   isAdmin: boolean;
+  palette: PaletteName;
 }
 
 export interface AdminUser extends PublicUser {
