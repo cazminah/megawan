@@ -11,12 +11,14 @@ live at <https://megawan.cazminah.me> · deploys on push to `main` (see [DEPLOY.
 ## what's in it
 
 - **accounts**: username + passphrase, optional email for resets. avatars are a game-icons.net icon in one of 18 colours, or an uploaded picture.
+- **availability**: when you're around on the day — any mix of AM · PM · evening (set on sign-up and in your profile). shows in the header next to your avatar and before your name in the arcade hover card.
+- **event date + countdown**: the header shows "Mon 7 Dec 2026 ‖ in 11 days 11 hrs" (UK time), switching to "it's on!" on the day. admins set it.
 - **colour-blind mode**: a toggle (register screen + profile) that swaps the tier colours for a blue → sky → amber → yellow ramp that stays distinct under protan/deutan/tritan colour blindness. saved per device and on the account.
 - **add game**: searches IGDB (main games, remakes, remasters, ports — no DLC/seasons/bundles), defaults to "keen".
 - **the arcade**: square cards with game artwork, grid or list, a smart search box (`2020 shooter pc`), filters (platform, genre, theme, mode, "works for N players", who's in, duration, headcount, voted / not, free-to-play), sort, and group by genre / group size / keenness. voting freezes the order until you close the picker, then cards glide into place. hover an avatar for who it is, how keen and for how long.
 - **past events**: after the day, an admin archives the arcade into a season (e.g. "2026"). past games show faded under a divider; tap one to bring it back with your old vote (or pick one if you didn't vote).
 - **game detail**: platforms, players + game modes, themes, a 2-line blurb, a folded trailer, and who's in as tier columns.
-- **admin**: delete people, reset avatars, remove games, archive / restore seasons.
+- **admin**: set the event date, delete people, reset avatars, remove games, archive / restore seasons.
 
 ## how it's put together
 
