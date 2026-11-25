@@ -10,19 +10,21 @@ export const LEVELS: InterestLevel[] = [1, 2, 3, 4, 5]; // least → most keen
 //               protan/deutan vision keeps; adjacent tiers stay distinct under
 //               protanopia, deuteranopia and tritanopia simulations (see shared/types.test.ts)
 // tier 1's text uses the normal dim text colour — its blue is too dim for words.
+// (colour-blind tier 1 is deliberately dull: 2.4:1 on the panel — the icon shape
+// and label carry it.)
 export type PaletteName = "default" | "colorblind";
 export const PALETTE_NAMES: PaletteName[] = ["default", "colorblind"];
 export const PALETTES: Record<PaletteName, { color: string; text: string }[]> = {
   default: [
     { color: "#4c689d", text: "#9aa3d6" },
-    { color: "#816dd2", text: "#816dd2" },
+    { color: "#816dd2", text: "#8c7ad8" }, // text a touch lighter for 4.5:1
     { color: "#dc5dd4", text: "#dc5dd4" },
     { color: "#ff7b74", text: "#ff7b74" },
     { color: "#ffde79", text: "#ffde79" },
   ],
   colorblind: [
-    { color: "#46669f", text: "#9aa3d6" },
-    { color: "#3e89d7", text: "#5c9ce0" },
+    { color: "#46587a", text: "#9aa3d6" }, // dull on purpose: "eh, sure" should barely glow
+    { color: "#4f87ab", text: "#6a9dc0" }, // OKLab midpoint between tiers 1 and 3
     { color: "#50b9df", text: "#50b9df" },
     { color: "#ffb147", text: "#ffb147" },
     { color: "#ffec6b", text: "#ffec6b" },

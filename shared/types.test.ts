@@ -27,8 +27,14 @@ describe("interest scale", () => {
     }
   });
 
-  it("every tier colour is visible on the panel (≥ 2.8:1)", () => {
-    for (const name of PALETTE_NAMES) for (const p of PALETTES[name]) expect(contrast(p.color, "#121935"), `${name} ${p.color}`).toBeGreaterThan(2.8);
+  it("every tier colour is visible on the panel (tier 1 may be dim: ≥ 2.3:1, the rest ≥ 2.8:1)", () => {
+    for (const name of PALETTE_NAMES) {
+      PALETTES[name].forEach((p, i) => expect(contrast(p.color, "#121935"), `${name} ${p.color}`).toBeGreaterThan(i === 0 ? 2.3 : 2.8));
+    }
+  });
+
+  it("tier text colours are readable on the panel (≥ 4.5:1)", () => {
+    for (const name of PALETTE_NAMES) for (const p of PALETTES[name]) expect(contrast(p.text, "#121935"), `${name} text ${p.text}`).toBeGreaterThan(4.5);
   });
 });
 
